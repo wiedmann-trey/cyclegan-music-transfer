@@ -133,3 +133,7 @@ dmypy.json
 /lmd_matched
 lmd_matched/
 .lmd_matched/
+./maestro-v3.0.0
+/maestro-v3.0.0
+maestro-v3.0.0/
+.maestro-v3.0.0/
