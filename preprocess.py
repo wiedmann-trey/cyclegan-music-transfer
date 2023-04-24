@@ -29,6 +29,7 @@ def create_song_genre_dict(root):
 genre_dictionary = create_song_genre_dict("labels for songs")
 
 def get_genre_path(root):
+    '''creates a list of all the song filepaths in LMD_matched and also maps the song label to the genre'''
     path_songs = []
     dict_song_genre = {}
     for dirpath, dirs, filenames in os.walk(root):
@@ -44,7 +45,7 @@ def get_genre_path(root):
     
     return path_songs, dict_song_genre
 
-lakh_song_folders, song_genre_dict = get_genre_path("lmd_matched")
+song_paths, song_genre_dict = get_genre_path("lmd_matched")
 
 
 def create_genre_number_dict(root):
@@ -122,9 +123,9 @@ def split_midi(midi_path, time_interval, header):
             new_split_mido.tracks.append(split_track)
         split_midi_files.append(new_split_mido)
     
-    string1 = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/lol test folder/subtle" 
-    end = ".mid"
-    new_file = "1"
+    #string1 = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/lol test folder/subtle" 
+    #end = ".mid"
+    #new_file = "1"
     for split_midi in split_midi_files:
         #finalpath = string1 + new_file + end
         split_mus = muspy.from_mido(split_midi)
@@ -142,6 +143,8 @@ def split_midi(midi_path, time_interval, header):
         
     return split_muspy_events, split_song_labels
 
+#like the main thing is that it would be better if the lakh_paths that we're inputting only correspond to the training genre(s) so that the preprocessing
+#takes a lot longer
 def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:int):
     '''converts midis in lakh dataset to muspy event representation'''
     timeshifts = []
@@ -183,10 +186,12 @@ total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-
 
 
 def get_test_train_samples(all_timeshifts, all_labels, first_class, second_class, num_classes):
+    """given lists of all the muspy event representations and the corresponding genre labels, extracts only the ones corresponding to the 
+    two training genres"""
     first_genre_ts = []
     second_genre_ts = []
-    for i in range(len(all_labels)):
-        if all_labels[i] == first_class or all_labels[i] == second_class:
+    for i in range(len(all_labels)): #like ideally we wouldn't have to do this 
+        if all_labels[i] == first_class:
                 first_genre_ts.append(all_timeshifts[i])
         if all_labels[i] == second_class:
               second_genre_ts.append(all_timeshifts[i])
