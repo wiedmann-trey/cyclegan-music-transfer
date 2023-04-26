@@ -11,7 +11,7 @@ from torch.nn import functional as F
 import random
 
 def cycle_loss(real_a, cycle_a, real_b, cycle_b):
-    return F.l1_loss(cycle_a, real_a, reduction='mean') + F.l1_loss(cycle_b, real_b, reduction='mean')
+    return F.cross_entropy(cycle_a, real_a, reduction='mean') + F.cross_entropy(cycle_b, real_b, reduction='mean')
 
 #https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
 
@@ -95,7 +95,7 @@ class Generator(nn.Module):
     
 
 class CycleGAN(nn.Module):
-        def __init__(self, mode='train', sample_size=50):
+        def __init__(self, mode='train', lamb=10):
             super(CycleGAN, self).__init__()
             assert mode in ["train", "A2B", "B2A"]
             self.G_A2B = Generator()
@@ -104,9 +104,10 @@ class CycleGAN(nn.Module):
             self.D_B = Discriminator()
             #self.D_A_all = Discriminator()
             #self.D_B_all = Discriminator()
-            self.sampler = Sampler(sample_size)
-            #self.l2loss = nn.MSELoss(reduction="mean")
+            #self.sampler = Sampler(sample_size)
+            self.l2loss = nn.MSELoss(reduction="mean")
             self.mode = mode
+            self.lamb = lamb
 
         def forward(self, real_A, real_B, x_m):
             # blue line
@@ -118,16 +119,12 @@ class CycleGAN(nn.Module):
             cycle_B = self.G_A2B(fake_A)
 
             if self.mode == 'train':
-                #[sample_fake_A, sample_fake_B] = self.sampler([fake_A, fake_B])
 
                 DA_real = self.D_A(real_A)
                 DB_real = self.D_B(real_B)
 
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
-
-                #DA_fake_sample = self.D_A(sample_fake_A)
-                #DB_fake_sample = self.D_B(sample_fake_B)
 
                 #DA_real_all = self.D_A_all(x_m)
                 #DB_real_all = self.D_B_all(x_m)
@@ -144,22 +141,23 @@ class CycleGAN(nn.Module):
 
                 # Discriminator losses
                 d_A_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real))
-                d_A_loss_fake = self.l2loss(DA_fake_sample, torch.zeros_like(DA_fake_sample))
+                d_A_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake))
                 d_A_loss = (d_A_loss_real + d_A_loss_fake) / 2
                 d_B_loss_real = self.l2loss(DB_real, torch.ones_like(DB_real))
-                d_B_loss_fake = self.l2loss(DB_fake_sample, torch.zeros_like(DB_fake_sample))
+                d_B_loss_fake = self.l2loss(DB_fake, torch.zeros_like(DB_fake))
                 d_B_loss = (d_B_loss_real + d_B_loss_fake) / 2
 
                 # All losses
-                d_A_all_loss_real = self.l2loss(DA_real_all, torch.ones_like(DA_real_all))
-                d_A_all_loss_fake = self.l2loss(DA_fake_all, torch.zeros_like(DA_fake_all))
+                '''
+                d_A_all_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real))
+                d_A_all_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake))
                 d_A_all_loss = (d_A_all_loss_real + d_A_all_loss_fake) / 2
-                d_B_all_loss_real = self.l2loss(DB_real_all, torch.ones_like(DB_real_all))
-                d_B_all_loss_fake = self.l2loss(DB_fake_all, torch.zeros_like(DB_fake_all))
+                d_B_all_loss_real = self.l2loss(DB_real, torch.ones_like(DB_real))
+                d_B_all_loss_fake = self.l2loss(DB_fake, torch.zeros_like(DB_fake))
                 d_B_all_loss = (d_B_all_loss_real + d_B_all_loss_fake) / 2
-
-                return (c_loss, g_A2B_loss, g_B2A_loss, d_A_loss, d_B_loss,
-                    d_A_all_loss, d_B_all_loss)
+                '''
+                return (c_loss, g_A2B_loss, g_B2A_loss, d_A_loss, d_B_loss)
+                    #d_A_all_loss, d_B_all_loss)
 
             elif self.mode == 'A2B':
                   return fake_B, cycle_A
