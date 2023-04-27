@@ -222,7 +222,7 @@ genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song lab
 print(len(song_paths))
 
 def get_data():
-    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 30)
+    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5)
     pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
 
 get_data()
