@@ -1,12 +1,14 @@
 import numpy as np
 import os
-import pretty_midi
 import shutil
 import muspy 
-from mido import MidiFile
+from mido import MidiFile, MidiTrack, Message
 import numpy as np
 import torch as torch
-
+from torch import nn
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Dataset, DataLoader
+import torch.utils.data as data
 
 def create_song_genre_dict(root):
     """
@@ -15,109 +17,226 @@ def create_song_genre_dict(root):
     song_genre_dict = {}
     for dirpath, dirs, filenames in os.walk(root):
         for file in filenames:
-
             absolute_file = os.path.join(root, file)
-
             with open(absolute_file, "r", encoding="utf-8", errors="ignore") as opening_file: 
                 lines = opening_file.read().split()
-
                 for i in lines: 
-                    song_genre_dict[i] = file[:-4]
+                    song_genre_dict[i] = file.split("_")[0]
     return song_genre_dict
 
-genre_dictionary = create_song_genre_dict("labels for songs")
-
-def get_genre_path(root):
+def get_genre_path(root, genre_dict):
+    '''creates a list of all the song filepaths in LMD_matched and also maps the song label to the genre'''
     path_songs = []
     dict_song_genre = {}
+    faulty_file = 1
     for dirpath, dirs, filenames in os.walk(root):
         for dir in dirs:
             if len((dir)) >= 5:
-                path_songs.append(os.path.join(dirpath, dir))
                 try: 
-                    song_genre = genre_dictionary[dir]
+                    song_genre = genre_dict[dir]
+                    dict_song_genre[os.path.join(dirpath, dir)] = dir
+                    path_songs.append(os.path.join(dirpath, dir))
                 except KeyError as e:
-                    genre_dictionary[dir] = "unknown"
-                song_genre_dict[os.path.join(dirpath, dir)] = dir
-                
-    
+                    #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/incorrect_genre_midis/"
+                    #error_string = str(faulty_file)
+                    #error_path = error_dir + error_string
+                    #shutil.move(os.path.join(dirpath, dir), error_path)
+                    #faulty_file+=1
+                    continue             
     return path_songs, dict_song_genre
 
-lakh_song_folders, song_genre_dict = get_genre_path("lmd_matched")
-
-def add_augmentation(muspy_object):
-    # tbh I'm not super sure what adjust resolution this is kinda a filler add augmentation function, but we might
-    # have to augment midi instead of muspy object
+def augment_pitch(muspy_object):
     if np.random.random() < 0.1:
-        return muspy_object.adjust_resolution(target=1, factor=0.1)
+        muspy_object = muspy_object.transpose(np.random.randint(-2, 2))
     return muspy_object
 
-def create_genre_number_dict(root):
-    """creates a dictionary mapping all the string labels to a number which we can later use for one hot encoding"""
-    genre_numerical_labels = {}
-    for dirpath, dirs, filenames in os.walk(root):
-        n = 0
-        for file in filenames:
-            genre_numerical_labels[file[:-4]] = n
-            n += 1
-    genre_numerical_labels["classical"] = len(genre_numerical_labels)
+def split_midi(midi_path, time_interval, header):
+    """given a midi file path and a time interval, divides the midi file into sub-midi-files of that time interval.
+    Returns a list of muspy music objects of that time interval"""
+    original_mido = MidiFile(midi_path, clip=True) # a lot of the LAKH ones were erroring since some of the velocities were over 127 so im clipping them w mido
+    split_midi_files = [] 
+    split_muspy_events = []
+    split_song_labels = []
+    total_seconds = original_mido.length #length of midos are given in seconds 
+    ticks_per_beat = original_mido.ticks_per_beat 
+    total_ticks = 0
+    genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/classical_events/"
+    try: 
+        just_song_key = song_genre_dict[header]
+        song_genre = genre_dictionary[just_song_key]
+        song_genre = genre_number_dict[song_genre]
+        if song_genre == 0: 
+            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events/"
+        if song_genre == 1: 
+            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/pop_events/"
+    except Exception as e:
+        song_genre = genre_number_dict["classical"]
 
-genre_number_dict = create_genre_number_dict("labels for songs")
+    #calculate total number of ticks
+    for msg in original_mido.tracks[1]: #have to start at index one since the first track is a header so it doesn't have any time ticks (apparently)
+        if msg.time:
+            total_ticks += msg.time
 
-def create_muspy(lakh_song_folders, maestro_path):
-    '''goes through all of the lakh song folder contents and creates muspy objects.
-    also goes through the main maestro folder and creates muspy objects
-    returns all of the muspy objects from both lakh and yamaha, and moves corrupt midi files to 
-    a separate folder'''
-    muspy_objects = []
-    invalid_mids = []
-    corresponding_labels = []
-    os.mkdir("invalid_midis")
-    for song_path in lakh_song_folders:
-        for dirpath, dirs, midifiles in os.walk(song_path):
-            for midifile in midifiles: 
-                absolute_song_path = os.path.join(song_path, midifile)
-                try: 
-                    just_song_key = song_genre_dict[song_path]
-                    song_genre = genre_dictionary[just_song_key]
-                    if song_genre != "unknown":
-                        muspy_obj = muspy.read(absolute_song_path)
-                        muspy_obj = add_augmentation(muspy_obj)
-                        muspy_obj.annotations = song_genre
-                        muspy_obj = muspy.to_event_representation(music=muspy_obj, encode_velocity=True, max_time_shift=100, velocity_bins=32)
-                        muspy_objects.append(muspy_obj)
-                        numerical_label = genre_number_dict[song_genre]
-                        corresponding_labels.append(numerical_label)
+    total_beats = total_ticks / ticks_per_beat
+    ticks_per_second = (total_beats / total_seconds) * ticks_per_beat
+
+    scale = np.random.random()
+    scaling_factor = 1
+
+    if scale < 0.1:
+        scaling_factor = 1.2
+    elif scale > 0.9:
+        scaling_factor = 0.8
+
+    for i in range(int((original_mido.length * scaling_factor) // time_interval)):
+        new_split_mido = MidiFile()
+        lower_range = i * time_interval
+        upper_range = (i + 1) * time_interval 
+
+        for track in original_mido.tracks:
+            split_track = MidiTrack()
+            current_msg_time=0
+
+            for msg in track:
+                current_msg_time += (int(np.round(msg.time * scaling_factor))/ ticks_per_second)
+
+                if lower_range <= current_msg_time < upper_range: 
+                    msg.time = int(round(msg.time * scaling_factor))
+                    if hasattr(msg, "instrument_name"):
+                        if msg.instrument_name != "drums" and msg.instrument_name != "drum" and msg.instrument_name != "percussion":
+                            split_track.append(msg)
                     else:
-                        continue
-                except Exception as e:
-                    print(repr(absolute_song_path))
-                    invalid_mids.append(absolute_song_path)
-                    shutil.move(absolute_song_path, "invalid_midis")
-                    continue
-    #maybe theres an easier way to do this but like we have to use folder names to ID midi files in LAKH whereas in
-    #yamaha everything in classical so I just used os.walk on two paths instead of putting them all in one big folder. 
-    for dirpath, dirs, filenames in os.walk(maestro_path):
-        for filename in filenames: 
-            if filename.endswith(".midi") or filename.endswith(".mid"):
-                rel_song_path = os.path.join(dirpath, filename)
-                try: 
-                    new_yamaha = muspy.read(rel_song_path)
-                    new_yamaha = add_augmentation(new_yamaha)
-                    song_genre = "classical"
-                    new_yamaha.annotations = song_genre
-                    new_yamaha = muspy.to_event_representation(music=new_yamaha, encode_velocity=True, max_time_shift=100, velocity_bins=32)
-                    muspy_objects.append(new_yamaha) 
-                    numerical_label = genre_number_dict[song_genre]
-                    corresponding_labels.append(numerical_label)
-                except Exception as e:
-                    print(repr(filename))
-                    shutil.move(rel_song_path, "invalid_midis")
-                    continue
-    return muspy_objects, corresponding_labels
+                        split_track.append(msg)
+
+            new_split_mido.tracks.append(split_track)
+        split_midi_files.append(new_split_mido)
+    subinterval = 0
+    new_path = midi_path.replace('/', '').replace('.', '')
+    for split_midi in split_midi_files:
+        split_mus = muspy.from_mido(split_midi)
+        new_mus = muspy.Music()
+        for i in split_mus.tracks:
+            if not i.is_drum:
+                new_mus.tracks.append(i)
+        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False)
+        file_name = f"{new_path}_{subinterval}.npy" # create a unique filename based on header and subinterval
+        final_path = os.path.join(genre_path, file_name)
+        array_mus = split_mus
+        np.save(final_path, array_mus, allow_pickle=True)
+        split_muspy_events.append(split_mus)
+        split_song_labels.append(song_genre)
+        subinterval+=1
+        
+    return split_muspy_events, split_song_labels
+
+#like the main thing is that it would be better if the lakh_paths that we're inputting only correspond to the training genre(s) so that the preprocessing
+#takes a lot longer
+def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:int):
+    '''converts midis in lakh dataset to muspy event representation'''
+    timeshifts = []
+    labels = []
+    #invalid_data = []
+    #num_songs = 0
+    num_left = 14704
+    faulty_file = 0
+    for lakh_path in lakh_paths:
+        #while num_songs < 10: 
+            for dirpath, dirs, midifiles in os.walk(lakh_path):
+                for midifile in midifiles: 
+                    if midifile.endswith(".midi") or midifile.endswith(".mid"):
+                        absolute_song_path = os.path.join(lakh_path, midifile)
+                        try: 
+                            lakh_timeshifts, lakh_labels = split_midi(absolute_song_path, time_interval, lakh_path)
+                            timeshifts.extend(lakh_timeshifts)
+                            labels.extend(lakh_labels)
+                            print("lakh not corrupted!")
+                            #num_songs += 1
+                        except Exception as e:
+                            print(repr(absolute_song_path))
+                            print(e)
+                            #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/faulty_midis/"
+                            #error_string = str(faulty_file)
+                            #error_path = error_dir + error_string
+
+                            #shutil.move(absolute_song_path, error_path)
+                            #faulty_file+=1
+                            #invalid_data.append(absolute_song_path)
+                            continue
+                        num_left-=1
+                        print(num_left)
+    #yam_songs = 0
+    for dirpath, dirs, midifiles in os.walk(yamaha_path):
+            #while num_songs < 10:
+                for midifile in midifiles:
+                    if midifile.endswith(".midi") or midifile.endswith(".mid"):
+                        absolute_song_path = os.path.join(yamaha_path, midifile)
+                        print(midifile)
+                        try: 
+                            yamaha_timeshifts, yamaha_labels = split_midi(absolute_song_path, time_interval, midifile[:-5])
+                            timeshifts.extend(yamaha_timeshifts)
+                            labels.extend(yamaha_labels)
+                            print("yamaha not corrupted!")
+                            print(len(labels))
+                            print(len(timeshifts))
+                            #yam_songs += 1
+                        except Exception as e:
+                            print(repr(absolute_song_path))    
+                            #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/faulty_midis/"
+                            #error_string = str(faulty_file)
+                            #error_path = error_dir + error_string
+                            #shutil.move(absolute_song_path, error_path)
+                            #faulty_file+=1
+                            continue          
+                            
+    timeshifts = [torch.tensor(seq) for seq in timeshifts]
+    timeshifts = pad_sequence(timeshifts, padding_value=0)
+    print(timeshifts.shape)
+
+    return timeshifts, labels
+               
+def get_test_train_samples(all_timeshifts, all_labels, first_class, second_class, num_classes):
+    """given lists of all the muspy event representations and the corresponding genre labels, extracts only the ones corresponding to the 
+    two training genres"""
+    first_genre_ts = []
+    second_genre_ts = []
+    for i in range(len(all_labels)): #like ideally we wouldn't have to do this 
+        if all_labels[i] == first_class:
+            first_genre_ts.append(all_timeshifts[i])
+        if all_labels[i] == second_class:
+            second_genre_ts.append(all_timeshifts[i])
+    #first_genre_ts = np.ndarray(first_genre_ts)
+    #second_genre_ts = np.ndarray(second_genre_ts)
+    #genre_labels = np.array(genre_labels)
+    #genre_labels = torch.from_numpy(genre_labels)
+    #genre_labels = torch.nn.functional.one_hot(genre_labels, num_classes)
+    #first_genre_ts = np.random.shuffle(first_genre_ts)
+    #second_genre_ts = np.random.shuffle(second_genre_ts)
+    return first_genre_ts, second_genre_ts
 
 
-#create_muspy("lmd_matched", "maestro-v3.0.0")
-            
+genre_dictionary = create_song_genre_dict("labels for songs") #maps song IDs to corresponding genre
+song_paths, song_genre_dict = get_genre_path("lmd_matched", genre_dictionary)
+    #song_paths = paths to LAKH songs corresponding to our genres, 
+    #song_genre_dict = dict mapping LAKH folder paths to the corresponding song IDs
+genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song labes to numbers  #changes to two zeros just for small samples
+print(len(song_paths))
+
+def get_data():
+    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5)
+    pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
+
+get_data()
 
 
+def get_number(root):
+    b=0
+    i=0
+    for dirpath, dirs, midifiles in os.walk(root):
+            #while num_songs < 10:
+                for midifile in midifiles:
+                    if midifile.endswith(".mid") or midifile.endswith(".midi"):
+                        i+=1
+                    b+=1
+    return i,b   
+
+print(get_number("lmd_matched"))       
