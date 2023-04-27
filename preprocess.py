@@ -131,66 +131,59 @@ def split_midi(midi_path, time_interval, header):
 
 #like the main thing is that it would be better if the lakh_paths that we're inputting only correspond to the training genre(s) so that the preprocessing
 #takes a lot longer
-def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:int):
+def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:int, lakh_first=False):
     '''converts midis in lakh dataset to muspy event representation'''
     timeshifts = []
     labels = []
-    #invalid_data = []
-    #num_songs = 0
+    
     num_left = 14704
     faulty_file = 0
-    for lakh_path in lakh_paths:
-        #while num_songs < 10: 
-            for dirpath, dirs, midifiles in os.walk(lakh_path):
-                for midifile in midifiles: 
-                    if midifile.endswith(".midi") or midifile.endswith(".mid"):
-                        absolute_song_path = os.path.join(lakh_path, midifile)
-                        try: 
-                            lakh_timeshifts, lakh_labels = split_midi(absolute_song_path, time_interval, lakh_path)
-                            timeshifts.extend(lakh_timeshifts)
-                            labels.extend(lakh_labels)
-                            print("lakh not corrupted!")
-                            #num_songs += 1
-                        except Exception as e:
-                            print(repr(absolute_song_path))
-                            print(e)
-                            #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/faulty_midis/"
-                            #error_string = str(faulty_file)
-                            #error_path = error_dir + error_string
-
-                            #shutil.move(absolute_song_path, error_path)
-                            #faulty_file+=1
-                            #invalid_data.append(absolute_song_path)
-                            continue
-                        num_left-=1
-                        print(num_left)
+    if lakh_first: 
+        for lakh_path in lakh_paths:
+                for dirpath, dirs, midifiles in os.walk(lakh_path):
+                    for midifile in midifiles: 
+                        if midifile.endswith(".midi") or midifile.endswith(".mid"):
+                            absolute_song_path = os.path.join(lakh_path, midifile)
+                            try: 
+                                lakh_timeshifts, lakh_labels = split_midi(absolute_song_path, time_interval, lakh_path)
+                                timeshifts.extend(lakh_timeshifts)
+                                labels.extend(lakh_labels)
+                                print("lakh not corrupted!")
+                                
+                            except Exception as e:
+                                print(repr(absolute_song_path))
+                                print(e)
+                                
+                                continue
+                            num_left-=1
+                            print(num_left)
     #yam_songs = 0
     for dirpath, dirs, midifiles in os.walk(yamaha_path):
-            #while num_songs < 10:
-                for midifile in midifiles:
-                    if midifile.endswith(".midi") or midifile.endswith(".mid"):
-                        absolute_song_path = os.path.join(yamaha_path, midifile)
-                        print(midifile)
-                        try: 
-                            yamaha_timeshifts, yamaha_labels = split_midi(absolute_song_path, time_interval, midifile[:-5])
-                            timeshifts.extend(yamaha_timeshifts)
-                            labels.extend(yamaha_labels)
-                            print("yamaha not corrupted!")
-                            print(len(labels))
-                            print(len(timeshifts))
-                            #yam_songs += 1
-                        except Exception as e:
-                            print(repr(absolute_song_path))    
-                            #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/faulty_midis/"
-                            #error_string = str(faulty_file)
-                            #error_path = error_dir + error_string
-                            #shutil.move(absolute_song_path, error_path)
-                            #faulty_file+=1
-                            continue          
+            #for dir in dirs:
+                #if len(dir)==4:
+                    for midifile in midifiles:
+                        if midifile.endswith(".midi") or midifile.endswith(".mid"):
+                        #print(midifile)
+                        #if midifile[0]!=".":
+                            absolute_song_path = os.path.join(dirpath, midifile)
+                            #absolute_song_path = os.path.join(yamaha_path, rel_path)
+                            print(midifile)
+                            try: 
+                                yamaha_timeshifts, yamaha_labels = split_midi(absolute_song_path, time_interval, midifile[:-5])
+                                timeshifts.extend(yamaha_timeshifts)
+                                labels.extend(yamaha_labels)
+                                print("yamaha not corrupted!")
+                                print(len(labels))
+                                print(len(timeshifts))
+                                #yam_songs += 1
+                            except Exception as e:
+                                print(repr(absolute_song_path))  
+                                print(e)  
+                                continue          
                             
-    timeshifts = [torch.tensor(seq) for seq in timeshifts]
-    timeshifts = pad_sequence(timeshifts, padding_value=0)
-    print(timeshifts.shape)
+    #timeshifts = [torch.tensor(seq) for seq in timeshifts]
+    #timeshifts = pad_sequence(timeshifts, padding_value=0)
+    #print(timeshifts.shape)
 
     return timeshifts, labels
                
@@ -222,8 +215,8 @@ genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song lab
 print(len(song_paths))
 
 def get_data():
-    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 30)
-    pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
+    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5, lakh_first=False)
+    #pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
 
 get_data()
 
