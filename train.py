@@ -4,8 +4,9 @@ from datasets import get_data
 
 def train(epochs=10, save=True):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
+    print("get data no issue")
     model = CycleGAN()
-
+    print("this part the issue")
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
     opt_D_A = torch.optim.Adam(model.D_A.parameters())
@@ -13,6 +14,7 @@ def train(epochs=10, save=True):
     ite=0
     for epoch in range(epochs):
         model.train()
+        print("its model.train")
         #for i, batch in batches: # TODO FIGURE OUR DATA LOADING / BATCHING
         for i, data in enumerate(pop_rock_train_loader):
             print("starting batch!")

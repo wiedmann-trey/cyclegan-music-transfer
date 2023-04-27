@@ -13,9 +13,9 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         vocab_size=int(vocab_size)
         embedding_dim=int(vocab_size)
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, dtype=torch.int64)
-        self.embedding.weight.requires_grad=False
-        self.embedding.weight.requires_grad_=False
+        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        #self.embedding.weight.requires_grad = False
+        #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, batch_first=True)
         
         self.classify = nn.Sequential(
@@ -37,33 +37,38 @@ class Encoder(nn.Module):
         self.hidden_dim=hidden_dim
         vocab_size=int(vocab_size)
         embedding_dim=int(vocab_size)
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, dtype=torch.int64)
-        self.embedding.weight.requires_grad_=False
-        self.embedding.weight.requires_grad=False
+        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        #self.embedding.weight.requires_grad = False
+        #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, dropout=dropout_rate, batch_first=True)     
-
+        
     def forward(self, input):
         x = input
         #x = torch.reshape(x, ((int(x.size(dim=1)/self.embedding_dim)), self.embedding_dim))
         
 
         # convert indices to LongTensor
-        x = torch.LongTensor(x)
+        
         print(type(self.embedding.weight))
         print(type(x))
+        self.embedding.weight = torch.nn.Parameter(self.embedding.weight.long(), requires_grad=False)
+        print("forward before matmul")
         x = x @ self.embedding.weight # embeddings for output of softmax
-
-        _,hidden = self.gru(x)
+        print("yay got through matmul")
+        print(self.gru)
+        print(x)
+        x_t = torch.tensor(x, dtype=torch.float32)
+        _,hidden = self.gru(x_t)
         return hidden
     
 class Decoder(nn.Module):
     def __init__(self, vocab_size=387, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
         super(Decoder, self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, dtype=torch.int64)
-        self.embedding.weight.requires_grad=False
-        self.embedding.weight.requires_grad_=False
-        self.rnn = nn.GRU(embedding_dim, hidden_dim, batch_first=True, dropout=dropout_rate)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        #self.embedding.weight.requires_grad = False
+        #self.embedding.weight.requires_grad_(False)
+        self.rnn = nn.GRU(embedding_dim, hidden_dim, batch_first=True, dropout=dropout_rate) #changed batch first from True to False
         self.pred = nn.Sequential(
             nn.Linear(hidden_dim, vocab_size, dtype=torch.float),
             nn.Softmax()
@@ -71,9 +76,16 @@ class Decoder(nn.Module):
 
     def forward(self, input, hidden):
         x = input # [batch_size]
+        x = torch.tensor(x, dtype=torch.int64)
         x = self.embedding(x) # [batch_size, embedding]
-        x,hidden = self.gru(x, hidden)
-        x = self.predict(x) # [batch_size, vocab_size]
+        x_t = torch.tensor(x, dtype=torch.float32)
+        x_t = torch.squeeze(x_t)
+        print(x_t.size())
+        print(hidden.size())
+        hidden = torch.squeeze(hidden)
+        print(hidden.size())
+        x,hidden = self.rnn(x_t, hidden)
+        x = self.pred(x) # [batch_size, vocab_size]
         return x, hidden
 
 class Generator(nn.Module):
@@ -91,10 +103,10 @@ class Generator(nn.Module):
 
         hidden = self.encoder(input)
 
-        outputs = torch.zeros(batch_size, max_len, vocab_size, requires_grad=False)
-        max_output = torch.zeros(batch_size, max_len, requires_grad=False)
+        outputs = torch.zeros(batch_size, max_len, vocab_size) #, requires_grad=False)
+        max_output = torch.zeros(batch_size, max_len) #, requires_grad=False)
 
-        decoder_input = torch.zeros(batch_size, requires_grad=False)
+        decoder_input = torch.zeros(batch_size) #, requires_grad=False)
         max_output[:,0] = decoder_input
 
         for t in range(max_len):
@@ -142,15 +154,15 @@ class CycleGAN(nn.Module):
                 c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B)
 
                 # Generator losses
-                g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake, requires_grad=False)) + c_loss
-                g_B2A_loss = self.l2loss(DA_fake, torch.ones_like(DA_fake, requires_grad=False)) + c_loss
+                g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
+                g_B2A_loss = self.l2loss(DA_fake, torch.ones_like(DA_fake)) + c_loss
 
                 # Discriminator losses
-                d_A_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real, requires_grad=False))
-                d_A_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake, requires_grad=False))
+                d_A_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real))
+                d_A_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake))
                 d_A_loss = (d_A_loss_real + d_A_loss_fake) / 2
-                d_B_loss_real = self.l2loss(DB_real, torch.ones_like(DB_real, requires_grad=False))
-                d_B_loss_fake = self.l2loss(DB_fake, torch.zeros_like(DB_fake, requires_grad=False))
+                d_B_loss_real = self.l2loss(DB_real, torch.ones_like(DB_real))
+                d_B_loss_fake = self.l2loss(DB_fake, torch.zeros_like(DB_fake))
                 d_B_loss = (d_B_loss_real + d_B_loss_fake) / 2
 
                 # All losses

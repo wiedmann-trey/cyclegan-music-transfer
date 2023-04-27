@@ -30,7 +30,7 @@ def numpy_to_torch(folder_path):
             timeshift = np.load(os.path.join(folder_path, filename))
             # append the array to the list
             timeshifts.append(timeshift)
-            print(timeshift)
+            #print(timeshift)
     timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
     timeshifts = pad_sequence(timeshifts, padding_value=0)
     return timeshifts
