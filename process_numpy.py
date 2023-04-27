@@ -40,4 +40,4 @@ def numpy_to_torch(folder_path):
     return timeshifts
 
 
-numpy_to_torch("/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events")
+#numpy_to_torch("/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events")
