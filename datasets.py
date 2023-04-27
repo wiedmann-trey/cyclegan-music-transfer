@@ -33,8 +33,8 @@ class TimeShiftDataset(Dataset):
     
 
 def get_data():
-    pop_samples = numpy_to_torch("/Users/carolinezhang/Downloads/cyclegan-music-transfer/pop_events")
-    jazz_samples = numpy_to_torch("/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events")
+    pop_samples = numpy_to_torch("pop_events")
+    jazz_samples = numpy_to_torch("jazz_events")
 
     num_samples = min(len(pop_samples), len(jazz_samples))
 
@@ -52,4 +52,4 @@ def get_data():
     print("no erroring!")
     return pop_jazz_test_loader, pop_jazz_test_loader
 
-get_data()
+#get_data()

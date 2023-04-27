@@ -9,11 +9,9 @@ def cycle_loss(real_a, cycle_a, real_b, cycle_b):
 
 class Discriminator(nn.Module):
 
-    def __init__(self, vocab_size=387, embedding_dim=256, hidden_dim=256):
+    def __init__(self, vocab_size, embedding_dim=256, hidden_dim=256):
         super(Discriminator, self).__init__()
-        vocab_size=int(vocab_size)
-        embedding_dim=int(vocab_size)
-        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, batch_first=True)
@@ -31,38 +29,23 @@ class Discriminator(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, vocab_size=387, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
+    def __init__(self, vocab_size, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        vocab_size=int(vocab_size)
-        embedding_dim=int(vocab_size)
-        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=0) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, dropout=dropout_rate, batch_first=True)     
         
     def forward(self, input):
-        x = input
-        #x = torch.reshape(x, ((int(x.size(dim=1)/self.embedding_dim)), self.embedding_dim))
-        
-
-        # convert indices to LongTensor
-        
-        print(type(self.embedding.weight))
-        print(type(x))
-        self.embedding.weight = torch.nn.Parameter(self.embedding.weight.long(), requires_grad=False)
-        print("forward before matmul")
+        x = input # [batch_size, max_len, vocab_size]        
         x = x @ self.embedding.weight # embeddings for output of softmax
-        print("yay got through matmul")
-        print(self.gru)
-        print(x)
-        x_t = torch.tensor(x, dtype=torch.float32)
-        _,hidden = self.gru(x_t)
+        _,hidden = self.gru(x)
         return hidden
     
 class Decoder(nn.Module):
-    def __init__(self, vocab_size=387, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
+    def __init__(self, vocab_size, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
         super(Decoder, self).__init__()
         
         self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
@@ -70,30 +53,23 @@ class Decoder(nn.Module):
         #self.embedding.weight.requires_grad_(False)
         self.rnn = nn.GRU(embedding_dim, hidden_dim, batch_first=True, dropout=dropout_rate) #changed batch first from True to False
         self.pred = nn.Sequential(
-            nn.Linear(hidden_dim, vocab_size, dtype=torch.float),
+            nn.Linear(hidden_dim, vocab_size),
             nn.Softmax()
         )
 
     def forward(self, input, hidden):
-        x = input # [batch_size]
-        x = torch.tensor(x, dtype=torch.int64)
-        x = self.embedding(x) # [batch_size, embedding]
-        x_t = torch.tensor(x, dtype=torch.float32)
-        x_t = torch.squeeze(x_t)
-        print(x_t.size())
-        print(hidden.size())
-        hidden = torch.squeeze(hidden)
-        print(hidden.size())
-        x,hidden = self.rnn(x_t, hidden)
+        x = input # [batch_size, 1]
+        x = self.embedding(x) # [batch_size, 1, embedding]
+        x,hidden = self.rnn(x, hidden)
         x = self.pred(x) # [batch_size, vocab_size]
         return x, hidden
 
 class Generator(nn.Module):
-    def __init__(self, vocab_size=387, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
+    def __init__(self, vocab_size, embedding_dim=256, hidden_dim=256, dropout_rate=.1):
         super(Generator, self).__init__()
         
-        self.encoder = Encoder(vocab_size=vocab_size, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout_rate=dropout_rate)
-        self.decoder = Decoder(vocab_size=vocab_size, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout_rate=dropout_rate)
+        self.encoder = Encoder(vocab_size, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout_rate=dropout_rate)
+        self.decoder = Decoder(vocab_size, embedding_dim=embedding_dim, hidden_dim=hidden_dim, dropout_rate=dropout_rate)
     
     def forward(self, input, teacher_force_ratio=0.5):
         #input is [batch_size, sentence_len, vocab_size]
@@ -122,13 +98,13 @@ class Generator(nn.Module):
     
 
 class CycleGAN(nn.Module):
-        def __init__(self, mode='train', lamb=10):
+        def __init__(self, vocab_size, mode='train', lamb=10):
             super(CycleGAN, self).__init__()
             assert mode in ["train", "A2B", "B2A"]
-            self.G_A2B = Generator()
-            self.G_B2A = Generator()
-            self.D_A = Discriminator()
-            self.D_B = Discriminator()
+            self.G_A2B = Generator(vocab_size)
+            self.G_B2A = Generator(vocab_size)
+            self.D_A = Discriminator(vocab_size)
+            self.D_B = Discriminator(vocab_size)
             self.l2loss = nn.MSELoss(reduction="mean")
             self.mode = mode
             self.lamb = lamb

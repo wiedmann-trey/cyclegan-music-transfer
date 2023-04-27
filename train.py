@@ -5,7 +5,7 @@ from datasets import get_data
 def train(epochs=10, save=True):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     print("get data no issue")
-    model = CycleGAN()
+    model = CycleGAN(389)
     print("this part the issue")
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
