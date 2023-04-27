@@ -144,3 +144,19 @@ lol test folder/
 /lol test folder
 lol test folder/
 .lol test folder/
+
+.faulty_midis
+./ faulty_midis
+faulty_midis/
+/faulty_midis
+faulty_midis/
+.faulty_midis/
+
+.incorrect_genre_midis
+./ incorrect_genre_midis
+incorrect_genre_midis/
+/incorrect_genre_midis
+incorrect_genre_midis/
+.incorrect_genre_midis/
+
+
