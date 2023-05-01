@@ -2,7 +2,7 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def train(epochs=10, vocab_size=389, save=True):
+def train(epochs=1, vocab_size=391, save=True):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
 
@@ -19,7 +19,9 @@ def train(epochs=10, vocab_size=389, save=True):
             real_a, real_b = data['bar_a'], data['bar_b']
             
             real_a = torch.nn.functional.one_hot(real_a, num_classes=(vocab_size)).float()
+            print(real_a)
             real_b = torch.nn.functional.one_hot(real_b, num_classes=(vocab_size)).float()
+            print(real_b)
             print(real_a.shape)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()

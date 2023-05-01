@@ -215,26 +215,9 @@ genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song lab
 print(len(song_paths))
 
 def get_data():
-<<<<<<< HEAD
     total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5, lakh_first=False)
     #pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
-=======
-    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5)
-    pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
->>>>>>> 892962850cc45ab926ec12897e845c0e7ec695f4
 
 get_data()
 
-
-def get_number(root):
-    b=0
-    i=0
-    for dirpath, dirs, midifiles in os.walk(root):
-            #while num_songs < 10:
-                for midifile in midifiles:
-                    if midifile.endswith(".mid") or midifile.endswith(".midi"):
-                        i+=1
-                    b+=1
-    return i,b   
-
-print(get_number("lmd_matched"))       
+   
