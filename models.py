@@ -54,6 +54,8 @@ class Decoder(nn.Module):
         #self.embedding.weight.requires_grad_(False)
         self.rnn = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True) #changed batch first from True to False
         self.pred = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.LeakyReLU(negative_slope=.1),
             nn.Linear(hidden_dim, vocab_size),
             nn.Softmax(dim=-1)
         )

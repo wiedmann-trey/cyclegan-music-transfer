@@ -28,8 +28,8 @@ def pretrain(epochs=10, vocab_size=391, save=True):
 
             opt_G_A2B.step()
             opt_G_B2A.step()
+            
             total_loss += float(cycle_loss)
-            print(f"batch{i} loss {float(cycle_loss)}")
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
