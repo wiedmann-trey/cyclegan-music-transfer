@@ -21,17 +21,17 @@ class ConvBlock(nn.Module):
         self.max_pool = nn.MaxPool2d(kernel_size=pooling_size)#, stride=stride, padding=0)
 
     def forward(self, x):
-        print(x.shape)
+        #print(x.shape)
         #x = x.expand(-1, -1, 391)
         x = self.conv_layer(x)
-        print(27)
-        print(x.shape)
+        #print(27)
+        #print(x.shape)
         x = x[None, :]
-        print(30)
-        print(x.shape)
+        #print(30)
+        #print(x.shape)
         x = torch.squeeze(x, dim=1)
-        print(33)
-        print(x.shape)
+        #print(33)
+        #print(x.shape)
         #x.expand(-1, 32)
         x = self.batch_norm(x)
         x = self.relu(x)
@@ -61,7 +61,7 @@ class Classifier(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        print("input shape", x.shape)
+        
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
@@ -74,26 +74,25 @@ class Classifier(nn.Module):
         x = self.dense2(x)
         x = self.relu2(x)
         x = self.dropout2(x)
-        print(77)
-        print(x.shape)
+        #print(77)
+        #print(x.shape)
         x = torch.transpose(x, dim0=0, dim1=1)
         x = self.dense3(x)
-        print(x.shape)
+        #print(x.shape)
         x = self.softmax(x)
-        print(x.shape)
+        #print(x.shape)
         return x
     
 # train and test from pytorch documentation: 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
 def train(model):
-    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data()
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
     #loss_func = nn.CrossEntropyLoss()
     #TORCH.NN.FUNCTIONAL.CROSS_ENTROPY
     #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
-
     for epoch in range(num_epochs):
         running_loss = 0.0
         for i, data in enumerate(pop_jazz_train_loader): # TODO: add our train data loader here
@@ -105,20 +104,17 @@ def train(model):
             
             # zero the parameter gradients
             optimizer.zero_grad()
-            # forward + backward + optimize
             outputs = model(timeshift)
-            #outputs=torch.squeeze(outputs)
-            print(outputs.shape)
-            print(timeshift_label.shape)
-            timeshift_label = torch.squeeze(timeshift_label)
+            
+            #timeshift_label = torch.squeeze(timeshift_label)
             loss = nn.functional.cross_entropy(outputs, timeshift_label)
             loss.backward()
             optimizer.step()
             running_loss += loss.item()
     
             # print statistics
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+            if i % 5 == 1:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 5:.10f}')
                 running_loss = 0.0
 
     print('Finished Training')

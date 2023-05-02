@@ -7,7 +7,7 @@ import mido
 
 def generate_song(input_song_path, output_song_path, genre='jazz', vocab_size=391):
 
-    model = CycleGAN(vocab_size, vocab_size-1, mode='A2B')
+    model = CycleGAN(vocab_size, vocab_size=391, mode='A2B')
 
     model.load_state_dict(torch.load('model.pth'))
     input_song = mido.MidiFile(input_song_path, clip=True)
@@ -23,7 +23,7 @@ def generate_song(input_song_path, output_song_path, genre='jazz', vocab_size=39
     else:
         raise ValueError("Invalid genre specified")    
     mask = np.logical_and(output_song != 388, output_song != 389, output_song != 390)
-    output_song = output_song = output_song[mask]
+    output_song = output_song[mask]
     output_song = muspy.from_event_representation(output_song)
 
     with open(output_song_path, 'wb') as file:
