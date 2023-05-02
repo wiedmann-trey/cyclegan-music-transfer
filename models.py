@@ -5,7 +5,7 @@ from torch.nn import functional as F
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
     return F.cross_entropy(cycle_a, real_a, ignore_index=padding_index,reduction='mean') + F.cross_entropy(cycle_b, real_b, ignore_index=padding_index, reduction='mean')
 
-def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
+def acc(real_a, cycle_a, real_b, cycle_b):
     return torch.mean(real_a==cycle_a), torch.mean(real_b==cycle_b)
 
 #https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
