@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-def cycle_loss(real_a, cycle_a, real_b, cycle_b):
-    return F.cross_entropy(cycle_a, real_a, reduction='mean') + F.cross_entropy(cycle_b, real_b, reduction='mean')
+def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
+    return F.cross_entropy(cycle_a, real_a, ignore_index=padding_index,reduction='mean') + F.cross_entropy(cycle_b, real_b, ignore_index=padding_index, reduction='mean')
 
 #https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
 
@@ -110,6 +110,7 @@ class CycleGAN(nn.Module):
             self.l2loss = nn.MSELoss(reduction="mean")
             self.mode = mode
             self.lamb = lamb
+            self.padding_idx = padding_idx
 
         def forward(self, real_A, real_B):
             # blue line
@@ -129,7 +130,7 @@ class CycleGAN(nn.Module):
                 DB_fake = self.D_B(fake_B)
 
                 # Cycle loss
-                c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B)
+                c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B, self.padding_idx)
 
                 # Generator losses
                 g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
