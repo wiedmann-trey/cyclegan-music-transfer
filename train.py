@@ -17,6 +17,8 @@ def train(epochs=1, vocab_size=391, save=True):
     for epoch in range(epochs):
         model.train()
         print(f"epoch:{epoch}")
+        total_loss = 0
+        num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
             print(f"batch: {i}")
             real_a, real_b = data['bar_a'], data['bar_b']
@@ -39,7 +41,9 @@ def train(epochs=1, vocab_size=391, save=True):
             opt_G_B2A.step()
             opt_D_A.step()
             opt_D_B.step()
-            print(f"loss: {g_A2B_loss}")
+            total_loss += g_A2B_loss
+            num_batch += 1
+        print(f"loss:{total_loss/num_batch}")
         if save:
             torch.save(model.state_dict(), 'model.pth')
 

@@ -49,8 +49,8 @@ def get_data():
     
     pop_jazz_train, pop_jazz_test = data.random_split(pop_jazz_set, [int(round(len(pop_samples)*0.8)), int(round(len(pop_samples)*0.2))])
     
-    pop_jazz_train_loader = DataLoader(dataset=pop_jazz_train, batch_size=5, shuffle=True)
-    pop_jazz_test_loader = DataLoader(dataset=pop_jazz_test, batch_size=5, shuffle=False)
+    pop_jazz_train_loader = DataLoader(dataset=pop_jazz_train, batch_size=32, shuffle=True)
+    pop_jazz_test_loader = DataLoader(dataset=pop_jazz_test, batch_size=32, shuffle=False)
     #print("no erroring!")
     return pop_jazz_train_loader, pop_jazz_test_loader
 
