@@ -3,9 +3,10 @@ import torch
 from datasets import get_data
 
 def train(epochs=1, vocab_size=389, save=True):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
-
+    model = model.to(device)
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
     opt_D_A = torch.optim.Adam(model.D_A.parameters())
@@ -17,7 +18,7 @@ def train(epochs=1, vocab_size=389, save=True):
         for i, data in enumerate(pop_rock_train_loader):
             print(f"batch: {i}")
             real_a, real_b = data['bar_a'], data['bar_b']
-            
+            real_a, real_b = real_a.to(device), real_b.to(device)
             real_a = torch.nn.functional.one_hot(real_a, num_classes=(vocab_size)).float()
             real_b = torch.nn.functional.one_hot(real_b, num_classes=(vocab_size)).float()
             # we may want to feed in as not one_hots and convert to one hots in the model
