@@ -115,10 +115,8 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            real_A_int = real_A
-            real_B_int = real_B
-            print(real_A.shape)
-            print(real_B.shape)
+            real_A_int = torch.unsqueeze(real_A, -1)
+            real_B_int = torch.unsqueeze(real_B, -1)
             
             real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float().cuda()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float().cuda()
