@@ -61,12 +61,11 @@ class Decoder(nn.Module):
         )
 
     def forward(self, input, hidden):
-        x = input # [batch_size]
-        x = self.embedding(x) # [batch_size, embedding]
-        x = torch.unsqueeze(x, dim=1) # [batch_size, 1, embedding]
-        x,hidden = self.rnn(x, hidden) # [batch_size, 1, hidden_dim], # [1, batch_size, hidden_dim] 
-        x = self.pred(x) # [batch_size, 1, vocab_size]
-        return x, hidden
+        x = input # [batch_size, max_len, vocab_size]
+        x = x @ self.embedding.weight # embeddings for output of softmax
+        x,_ = self.rnn(x, hidden) # [batch_size, len, hidden_dim], # [len, batch_size, hidden_dim] 
+        x = self.pred(x) # [batch_size, len, vocab_size]
+        return x
 
 class Generator(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
@@ -83,25 +82,16 @@ class Generator(nn.Module):
 
         hidden = self.encoder(input)
 
-        outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
-        max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
+        outputs = self.decoder(input, hidden)
 
-        decoder_input = 388*torch.ones(batch_size, dtype=torch.int32).cuda() # start token
-        max_output[:,0] = decoder_input
+        sos = 388*torch.ones(batch_size, dtype=torch.int32).cuda()
+        sos = torch.nn.functional.one_hot(sos, num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
 
-        start_token = torch.nn.functional.one_hot(decoder_input.long(), num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
-        outputs = torch.cat([outputs, start_token], dim=1)
+        outputs = torch.cat([sos, outputs[:,:-1]], dim=1)
 
-        for t in range(1,max_len):
-            decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
-            outputs = torch.cat([outputs, decoder_output], dim=1)
+        max_outputs = outputs.max(-1)[1]
 
-            argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
-            max_output[:,t] = argMax
-
-            decoder_input = argMax
-
-        return outputs, max_output
+        return outputs, max_outputs
     
 
 class CycleGAN(nn.Module):
