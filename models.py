@@ -114,11 +114,15 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            fake_B, fake_B_toks = self.G_A2B(real_A.float())
+            real_A_int = real_A.clone().cuda()
+            real_B_int = real_B.clone().cuda()
+            real_A.float()
+            real_B.float()
+            fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
             # red line
-            fake_A, fake_A_toks = self.G_B2A(real_B.float())
+            fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
             
             fake_B, fake_B_toks = fake_B.cuda(), fake_B_toks.cuda()
@@ -129,8 +133,8 @@ class CycleGAN(nn.Module):
 
             if self.mode == 'train':
 
-                DA_real = self.D_A(real_A.float())
-                DB_real = self.D_B(real_B.float())
+                DA_real = self.D_A(real_A)
+                DB_real = self.D_B(real_B)
 
                 DA_real = DA_real.cuda()
                 DB_real = DB_real.cuda()
@@ -142,7 +146,7 @@ class CycleGAN(nn.Module):
                 DB_fake = DB_fake.cuda()
 
                 # Cycle loss
-                c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B, self.padding_idx)
+                c_loss = self.lamb * cycle_loss(real_A_int, cycle_A, real_B_int, cycle_B, self.padding_idx)
 
                 # Generator losses
                 g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
