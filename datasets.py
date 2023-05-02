@@ -29,9 +29,6 @@ class TimeShiftDataset(Dataset):
         bar_b = torch.squeeze(bar_b)
         baridx = np.array([index])
         #label = self.labels[index]
-        print("bar_a")
-        print(bar_a)
-        print(bar_a.shape)
         sample = {'baridx': baridx, 'bar_a': bar_a, 'bar_a_label': self.genre_a,
                   'bar_b': bar_b, 'bar_b_label': self.genre_b}
         return sample
