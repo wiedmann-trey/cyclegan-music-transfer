@@ -35,7 +35,7 @@ def train(epochs=1, vocab_size=391, save=True):
             g_B2A_loss.backward(retain_graph=True)
 
             d_A_loss.backward(retain_graph=True)
-            d_B_loss.backward(retain_graph=True)
+            d_B_loss.backward()
 
             opt_G_A2B.step()
             opt_G_B2A.step()
