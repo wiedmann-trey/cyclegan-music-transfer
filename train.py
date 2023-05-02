@@ -2,9 +2,7 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-pop_jazz_train_loader, pop_jazz_test_loader = get_data()
-
-def train(epochs=1, vocab_size=391, save=True):
+def train(epochs=10, vocab_size=391, save=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
@@ -20,7 +18,6 @@ def train(epochs=1, vocab_size=391, save=True):
         total_loss = 0
         num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
-            print(f"batch: {i}")
             real_a, real_b = data['bar_a'], data['bar_b']
             # we may want to feed in as not one_hots and convert to one hots in the model
             real_a, real_b = real_a.to(device), real_b.to(device)
