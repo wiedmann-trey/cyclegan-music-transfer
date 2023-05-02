@@ -78,7 +78,7 @@ def train(model):
 
     for epoch in range(num_epochs):
         running_loss = 0.0
-        for i, data in enumerate(trainloader, 0): # TODO: add our train data loader here
+        for i, data in enumerate(pop_rock_trainloader, 0): # TODO: add our train data loader here
             # get the inputs; data is a list of [inputs, labels]
             # TODO: what format will the data be in??
             inputs, labels = data 

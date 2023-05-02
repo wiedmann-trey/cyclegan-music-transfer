@@ -1,7 +1,8 @@
 import torch 
 import torch.nn as nn
 from torch.nn import functional as F
-from train import pop_rock_train_loader, pop_rock_test_loader
+from train import pop_jazz_train_loader, pop_jazz_test_loader
+import numpy as np
 ## DISCLAIMER: I haven't run this yet but it theoretically should work
 # once we fix the todos
 
@@ -50,12 +51,10 @@ class Classifier(nn.Module):
 
     def forward(self, x):
         print("input shape", x.shape)
-
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
-
         x = self.dense1(x)
         x = self.relu1(x)
         x = self.dropout1(x)
@@ -79,22 +78,44 @@ def train(model):
 
     for epoch in range(num_epochs):
         running_loss = 0.0
-        for i, data in enumerate(pop_rock_train_loader): # TODO: add our train data loader here
+        for i, data in enumerate(pop_jazz_train_loader): # TODO: add our train data loader here
             # get the inputs; data is a list of [inputs, labels]
             # TODO: what format will the data be in??
-            real_a, real_b = data['bar_a'], data['bar_b']
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model(real_a)
-            loss = loss_func(outputs, real_a)
-            loss.backward()
-            optimizer.step()
-
+            real_a, real_a_label, real_b, real_b_label = data['bar_a'], data['bar_a_label'], data['bar_b'], data['bar_b_label']
+            random_order = np.random.random()
+            if random_order < 0.5: 
+                # zero the parameter gradients
+                optimizer.zero_grad()
+                # forward + backward + optimize
+                outputs = model(real_a)
+                loss = loss_func(outputs, real_a)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+                optimizer.zero_grad()
+                # forward + backward + optimize
+                outputs = model(real_b)
+                loss = loss_func(outputs, real_b)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+            if random_order >= 0.5: 
+                # zero the parameter gradients
+                optimizer.zero_grad()
+                # forward + backward + optimize
+                outputs = model(real_b)
+                loss = loss_func(outputs, real_b_label)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
+                optimizer.zero_grad()
+                # forward + backward + optimize
+                outputs = model(real_a)
+                loss = loss_func(outputs, real_a)
+                loss.backward()
+                optimizer.step()
+                running_loss += loss.item()
             # print statistics
-            running_loss += loss.item()
             if i % 2000 == 1999:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
                 running_loss = 0.0
@@ -106,14 +127,20 @@ def test(model):
     total = 0
 
     with torch.no_grad():
-        for data in pop_rock_train_loader: # TODO: replace with test data loader
-            inputs, labels = data
-            outputs = model(inputs)
+        for data in pop_: # TODO: replace with test data loader
+            real_a, real_a_label, real_b, real_b_label = data['bar_a'], data['bar_a_label'], data['bar_b'], data['bar_b_label']
 
+            outputs = model(real_a)#[1]
+            
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            total += real_a_label.size(0)
+
+            outputs = model(real_b)#[1]
+            # the class with the highest energy is what we choose as prediction
+            _, predicted = torch.max(outputs.data, 1)
+            total += real_b_label.size(0)
+            correct += (predicted == real_b).sum().item()
 
     print(f'Accuracy of the network on the {total} test inputs: {100 * correct // total} %')
 

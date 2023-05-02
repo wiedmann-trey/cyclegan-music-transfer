@@ -2,8 +2,9 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
+pop_jazz_train_loader, pop_jazz_test_loader = get_data()
+
 def train(epochs=1, vocab_size=391, save=True):
-    pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
 
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
@@ -14,7 +15,7 @@ def train(epochs=1, vocab_size=391, save=True):
     for epoch in range(epochs):
         model.train()
         #for i, batch in batches: # TODO FIGURE OUR DATA LOADING / BATCHING
-        for i, data in enumerate(pop_rock_train_loader):
+        for i, data in enumerate(pop_jazz_train_loader):
             print(f"batch: {i}")
             real_a, real_b = data['bar_a'], data['bar_b']
             
