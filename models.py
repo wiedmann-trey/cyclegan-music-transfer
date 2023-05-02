@@ -9,12 +9,12 @@ def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
 
 class Discriminator(nn.Module):
 
-    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=256):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Discriminator, self).__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
-        self.gru = nn.GRU(embedding_dim, hidden_dim, batch_first=True)
+        self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)
         
         self.classify = nn.Sequential(
             nn.Linear(hidden_dim, 1)  
@@ -29,7 +29,7 @@ class Discriminator(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=256):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
@@ -37,7 +37,7 @@ class Encoder(nn.Module):
         
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
-        self.gru = nn.GRU(embedding_dim, hidden_dim, batch_first=True)     
+        self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
         x = input # [batch_size, max_len, vocab_size]
@@ -46,13 +46,13 @@ class Encoder(nn.Module):
         return hidden
     
 class Decoder(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=256):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Decoder, self).__init__()
         
         self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
-        self.rnn = nn.GRU(embedding_dim, hidden_dim, batch_first=True) #changed batch first from True to False
+        self.rnn = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True) #changed batch first from True to False
         self.pred = nn.Sequential(
             nn.Linear(hidden_dim, vocab_size),
             nn.Softmax(dim=-1)
