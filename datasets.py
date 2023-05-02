@@ -56,9 +56,9 @@ def get_data():
     jazz_samples = numpy_to_torch("jazz_events")
 
     num_samples = min(len(pop_samples), len(jazz_samples))
-
-    pop_samples = pop_samples[:num_samples - 1]
-    jazz_samples = jazz_samples[:num_samples - 1]
+    num_samples_round = num_samples // 32
+    pop_samples = pop_samples[:num_samples_round*32]
+    jazz_samples = jazz_samples[:num_samples_round*32]
     pop_jazz_set = TimeShiftDataset(A_time_shifts=pop_samples, B_time_shifts=jazz_samples, genre_a=1, genre_b=2)
 
     pop_jazz_train, pop_jazz_test = data.random_split(pop_jazz_set, [int(round(len(pop_samples)*0.8)), int(round(len(pop_samples)*0.2))])

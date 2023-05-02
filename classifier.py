@@ -26,9 +26,9 @@ class ConvBlock(nn.Module):
         
         x = torch.squeeze(x, dim=1)
         
-        x = self.conv_layer(x)
-        x = x[None, :]
-        x = torch.squeeze(x, dim=1)
+        #x = self.conv_layer(x)
+        #x = x[None, :]
+        #x = torch.squeeze(x, dim=1)
         x = self.batch_norm(x)
         x = self.relu(x)
         x = self.max_pool(x)
@@ -74,9 +74,7 @@ class Classifier(nn.Module):
         x = self.dense3(x)
         x = self.softmax(x)
 
-        x = torch.transpose(x, dim0=0, dim1=1)
-        x = self.dense3(x)
-        x = self.softmax(x)
+        
         return x
     
 # train and test from pytorch documentation: 
