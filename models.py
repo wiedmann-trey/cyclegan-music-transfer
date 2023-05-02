@@ -7,7 +7,7 @@ def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
 
 
 def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
-    return torch.mean((real_a == padding_index or real_a==cycle_a).float()), torch.mean((real_b == padding_index or real_b==cycle_b).float())
+    return torch.mean((real_a == padding_index | real_a==cycle_a).float()), torch.mean((real_b == padding_index | real_b==cycle_b).float())
 #https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
 
 class Discriminator(nn.Module):
