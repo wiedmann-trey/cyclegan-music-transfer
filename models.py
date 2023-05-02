@@ -121,13 +121,25 @@ class CycleGAN(nn.Module):
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
             
+            fake_B, fake_B_toks = fake_B.cuda(), fake_B_toks.cuda()
+            cycle_A, cycle_A_toks = cycle_A.cuda(), cycle_A_toks.cuda()
+
+            fake_A, fake_A_toks = fake_A.cuda(), fake_A_toks.cuda()
+            cycle_B, cycle_B_toks = cycle_B.cuda(), cycle_B_toks.cuda()
+
             if self.mode == 'train':
 
                 DA_real = self.D_A(real_A)
                 DB_real = self.D_B(real_B)
 
+                DA_real = DA_real.cuda()
+                DB_real = DB_real.cuda()
+
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
+
+                DA_fake = DA_fake.cuda()
+                DB_fake = DB_fake.cuda()
 
                 # Cycle loss
                 c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B, self.padding_idx)
