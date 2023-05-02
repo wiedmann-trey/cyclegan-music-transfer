@@ -123,7 +123,7 @@ class CycleGAN(nn.Module):
 
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
-
+            print(cycle_A.shape)
             # red line
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
