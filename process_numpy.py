@@ -39,8 +39,8 @@ def numpy_to_torch(folder_path):
                 continue
             #print(timeshift)
     timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
-    timeshifts = pad_sequence(timeshifts, padding_value=390)
-    print("loaded!")
+    timeshifts = pad_sequence(timeshifts, padding_value=390, batch_first=True)
+    print("loaded!") 
     return timeshifts
 
 

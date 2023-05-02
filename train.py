@@ -2,6 +2,8 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
+pop_jazz_train_loader, pop_jazz_test_loader = get_data()
+
 def train(epochs=1, vocab_size=391, save=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
