@@ -67,7 +67,7 @@ class Decoder(nn.Module):
         return x, hidden
 
 class Generator(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=256):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Generator, self).__init__()
         
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
