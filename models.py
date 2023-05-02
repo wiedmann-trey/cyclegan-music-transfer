@@ -84,7 +84,7 @@ class Generator(nn.Module):
         vocab_size = input.shape[2]
 
         hidden = self.encoder(input)
-        input_copy = input.clone().detatch()
+        input_copy = input.clone().detach()
         outputs = self.decoder(input_copy, hidden)
 
         sos = 388*torch.ones(batch_size, dtype=torch.int64).cuda()
