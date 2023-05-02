@@ -83,7 +83,7 @@ class Generator(nn.Module):
 
         hidden = self.encoder(input)
 
-        outputs = torch.zeros(batch_size, max_len, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
+        outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
         max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
 
         decoder_input = torch.zeros(batch_size, dtype=torch.int32).cuda() #, requires_grad=False)
@@ -91,7 +91,7 @@ class Generator(nn.Module):
 
         for t in range(max_len):
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
-            outputs[:,t:t+1] = decoder_output
+            outputs = torch.cat([outputs, decoder_output], dim=1)
 
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
             max_output[:,t] = argMax
