@@ -124,6 +124,9 @@ class CycleGAN(nn.Module):
 
             fake_A, _ = self.G_B2A(real_B)
 
+            fake_A = torch.permute(fake_A, (0, 2, 1))
+            fake_B = torch.permute(fake_B, (0, 2, 1))
+
             return cycle_loss(real_A_int, fake_B, real_B_int, fake_A, self.padding_idx)
 
         def forward(self, real_A, real_B):
