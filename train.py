@@ -17,6 +17,8 @@ def pretrain(epochs=10, vocab_size=391, save=True, load=False):
         model.train()
         print(f"pretrain epoch:{epoch}")
         total_loss = 0
+        total_acc_a = 0
+        total_acc_b = 0
         num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
@@ -24,7 +26,7 @@ def pretrain(epochs=10, vocab_size=391, save=True, load=False):
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()
 
-            cycle_loss = model.pretrain(real_a, real_b)
+            cycle_loss, acc_a, acc_b = model.pretrain(real_a, real_b)
             
             cycle_loss.backward()
 
@@ -32,8 +34,10 @@ def pretrain(epochs=10, vocab_size=391, save=True, load=False):
             opt_G_B2A.step()
 
             total_loss += float(cycle_loss)
+            total_acc_a += float(acc_a)
+            total_acc_b += float(acc_b)
             num_batch += 1
-        print(f"loss:{total_loss/num_batch}")
+        print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
             torch.save(model.state_dict(), 'model.pth')
 
