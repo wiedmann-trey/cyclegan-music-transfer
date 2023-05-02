@@ -8,8 +8,8 @@ def pretrain(epochs=10, vocab_size=391, save=True):
     model = CycleGAN(vocab_size, vocab_size-1)
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), lr=.007)
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), lr=.007)
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), lr=.02)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), lr=.02)
 
     for epoch in range(epochs):
         model.train()
