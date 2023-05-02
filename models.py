@@ -84,7 +84,7 @@ class Generator(nn.Module):
 
         outputs = self.decoder(input, hidden)
 
-        sos = 388*torch.ones(batch_size, dtype=torch.int32).cuda()
+        sos = 388*torch.ones(batch_size, dtype=torch.int64).cuda()
         sos = torch.nn.functional.one_hot(sos, num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
 
         outputs = torch.cat([sos, outputs[:,:-1]], dim=1)
