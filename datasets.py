@@ -82,12 +82,9 @@ def get_classifier_data(batch_size):
     jazz_labels = [torch.nn.functional.one_hot(torch.tensor(0), num_classes=(2)).float() for i in jazz_samples]
 
     all_samples = torch.cat((pop_samples, jazz_samples))
-    print(len(all_samples))
     pop_labels.extend(jazz_labels)
     all_labels=pop_labels
-    print(len(pop_labels))
-    print(len(jazz_labels))
-
+    
     pop_jazz_set = ClassifierDataset(all_genres = all_samples, all_labels = all_labels)
     pop_jazz_train, pop_jazz_test = data.random_split(pop_jazz_set, [int(round(len(all_labels)*0.8)), int(round(len(all_labels)*0.2))])
     

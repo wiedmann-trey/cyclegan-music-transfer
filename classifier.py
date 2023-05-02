@@ -17,22 +17,18 @@ class ConvBlock(nn.Module):
         self.conv_layer = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
         self.batch_norm = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
-        #self.max_pool = nn.MaxUnpool2d(kernel_size=pooling_size, stride=stride, padding=0)
         self.max_pool = nn.MaxPool2d(kernel_size=pooling_size)#, stride=stride, padding=0)
 
     def forward(self, x):
-        #print(x.shape)
-        #x = x.expand(-1, -1, 391)
+        
         x = self.conv_layer(x)
-        #print(27)
-        #print(x.shape)
         x = x[None, :]
-        #print(30)
-        #print(x.shape)
+        
         x = torch.squeeze(x, dim=1)
-        #print(33)
-        #print(x.shape)
-        #x.expand(-1, 32)
+        
+        x = self.conv_layer(x)
+        x = x[None, :]
+        x = torch.squeeze(x, dim=1)
         x = self.batch_norm(x)
         x = self.relu(x)
         x = self.max_pool(x)
@@ -61,7 +57,7 @@ class Classifier(nn.Module):
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):
-        
+
         x = self.conv1(x)
         x = self.conv2(x)
         x = self.conv3(x)
@@ -74,13 +70,13 @@ class Classifier(nn.Module):
         x = self.dense2(x)
         x = self.relu2(x)
         x = self.dropout2(x)
-        #print(77)
-        #print(x.shape)
         x = torch.transpose(x, dim0=0, dim1=1)
         x = self.dense3(x)
-        #print(x.shape)
         x = self.softmax(x)
-        #print(x.shape)
+
+        x = torch.transpose(x, dim0=0, dim1=1)
+        x = self.dense3(x)
+        x = self.softmax(x)
         return x
     
 # train and test from pytorch documentation: 
@@ -89,24 +85,20 @@ class Classifier(nn.Module):
 def train(model):
     pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
     #loss_func = nn.CrossEntropyLoss()
-    #TORCH.NN.FUNCTIONAL.CROSS_ENTROPY
     #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
     for epoch in range(num_epochs):
         running_loss = 0.0
-        for i, data in enumerate(pop_jazz_train_loader): # TODO: add our train data loader here
-            # get the inputs; data is a list of [inputs, labels]
-            # TODO: what format will the data be in??
+        for i, data in enumerate(pop_jazz_train_loader):
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
-            
             
             # zero the parameter gradients
             optimizer.zero_grad()
             outputs = model(timeshift)
-            
-            #timeshift_label = torch.squeeze(timeshift_label)
+
+            timeshift_label = torch.squeeze(timeshift_label)
             loss = nn.functional.cross_entropy(outputs, timeshift_label)
             loss.backward()
             optimizer.step()
@@ -116,6 +108,9 @@ def train(model):
             if i % 5 == 1:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 5:.10f}')
                 running_loss = 0.0
+        
+        # save every epoch
+        torch.save(model.state_dict(), f'classifier_epoch{epoch}_model.pth')
 
     print('Finished Training')
 
@@ -125,7 +120,7 @@ def test(model):
     total = 0
 
     with torch.no_grad():
-        for data in pop_jazz_test_loader: # TODO: replace with test data loader
+        for data in pop_jazz_test_loader:
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
             outputs = model(timeshift)#[1]
@@ -141,6 +136,6 @@ def test(model):
 
 
 if __name__ == '__main__':
-    classifier = Classifier(num_classes=2) # TODO: 3 for pop, jazz, classical ??
+    classifier = Classifier(num_classes=2)
     train(classifier)
     test(classifier)
