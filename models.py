@@ -86,7 +86,7 @@ class Generator(nn.Module):
         outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
         max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
 
-        decoder_input = torch.zeros(batch_size, dtype=torch.int32).cuda() #, requires_grad=False)
+        decoder_input = 388*torch.ones(batch_size, dtype=torch.int32).cuda() # start token
         max_output[:,0] = decoder_input
 
         for t in range(max_len):
