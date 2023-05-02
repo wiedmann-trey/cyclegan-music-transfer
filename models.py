@@ -115,15 +115,14 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            real_A_int = torch.unsqueeze(real_A, -1)
-            real_B_int = torch.unsqueeze(real_B, -1)
+            real_A_int = real_A
+            real_B_int = real_B
             
             real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float()
 
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
-            print(cycle_A.shape)
             # red line
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
@@ -137,6 +136,9 @@ class CycleGAN(nn.Module):
                 DB_fake = self.D_B(fake_B)
 
                 # Cycle loss
+                cycle_A = torch.permute(cycle_A, (0, 2, 1))
+                cycle_B = torch.permute(cycle_B, (0, 2, 1))
+
                 c_loss = self.lamb * cycle_loss(real_A_int, cycle_A, real_B_int, cycle_B, self.padding_idx)
 
                 # Generator losses
