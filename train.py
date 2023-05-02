@@ -26,7 +26,7 @@ def pretrain(epochs=10, vocab_size=391, save=True):
             
             cycle_loss.backward()
 
-            opt_G_A2B.step(retain_graph=True)
+            opt_G_A2B.step()
             opt_G_B2A.step()
             total_loss += float(cycle_loss)
             num_batch += 1
