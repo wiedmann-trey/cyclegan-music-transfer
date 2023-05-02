@@ -117,8 +117,8 @@ class CycleGAN(nn.Module):
             # blue line
             real_A_int = real_A
             real_B_int = real_B
-            print(real_A)
-            print(real_B)
+            print(real_A.shape)
+            print(real_B.shape)
             
             real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float().cuda()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float().cuda()
