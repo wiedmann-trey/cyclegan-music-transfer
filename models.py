@@ -2,8 +2,8 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
-def cycle_loss(real_a, cycle_a, real_b, cycle_b):
-    return F.cross_entropy(cycle_a, real_a, reduction='mean') + F.cross_entropy(cycle_b, real_b, reduction='mean')
+def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
+    return F.cross_entropy(cycle_a, real_a, ignore_index=padding_index,reduction='mean') + F.cross_entropy(cycle_b, real_b, ignore_index=padding_index, reduction='mean')
 
 #https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
 
@@ -25,7 +25,7 @@ class Discriminator(nn.Module):
         x = x @ self.embedding.weight # embeddings for output of softmax
         _,x = self.gru(x) # we just want the last hidden state
         x = self.classify(x)
-        x = torch.sigmoid(x) # want [0,1]
+        #x = torch.sigmoid(x) # want [0,1] apparently we dont want sigmoid, because for LSGAN, it encourages our samples to be close to the decision boundary
         return x
 
 class Encoder(nn.Module):
@@ -81,10 +81,10 @@ class Generator(nn.Module):
 
         hidden = self.encoder(input)
 
-        outputs = torch.zeros(batch_size, max_len, vocab_size) #, requires_grad=False)
-        max_output = torch.zeros(batch_size, max_len) #, requires_grad=False)
+        outputs = torch.zeros(batch_size, max_len, vocab_size).cuda() #, requires_grad=False)
+        max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
 
-        decoder_input = torch.zeros(batch_size, dtype=torch.long) #, requires_grad=False)
+        decoder_input = torch.zeros(batch_size, dtype=torch.int32).cuda() #, requires_grad=False)
         max_output[:,0] = decoder_input
 
         for t in range(max_len):
@@ -110,26 +110,48 @@ class CycleGAN(nn.Module):
             self.l2loss = nn.MSELoss(reduction="mean")
             self.mode = mode
             self.lamb = lamb
+            self.padding_idx = padding_idx
+            self.vocab_size = vocab_size
 
         def forward(self, real_A, real_B):
             # blue line
+            real_A_int = real_A
+            real_B_int = real_B
+            print(real_A.shape)
+            print(real_B.shape)
+            
+            real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float().cuda()
+            real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float().cuda()
+
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
             # red line
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
+            
+            fake_B, fake_B_toks = fake_B.cuda(), fake_B_toks.cuda()
+            cycle_A, cycle_A_toks = cycle_A.cuda(), cycle_A_toks.cuda()
+
+            fake_A, fake_A_toks = fake_A.cuda(), fake_A_toks.cuda()
+            cycle_B, cycle_B_toks = cycle_B.cuda(), cycle_B_toks.cuda()
 
             if self.mode == 'train':
 
                 DA_real = self.D_A(real_A)
                 DB_real = self.D_B(real_B)
 
+                DA_real = DA_real.cuda()
+                DB_real = DB_real.cuda()
+
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
 
+                DA_fake = DA_fake.cuda()
+                DB_fake = DB_fake.cuda()
+
                 # Cycle loss
-                c_loss = self.lamb * cycle_loss(real_A, cycle_A, real_B, cycle_B)
+                c_loss = self.lamb * cycle_loss(real_A_int, cycle_A, real_B_int, cycle_B, self.padding_idx)
 
                 # Generator losses
                 g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
