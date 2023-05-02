@@ -2,10 +2,12 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def pretrain(epochs=10, vocab_size=391, save=True):
+def pretrain(epochs=10, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
+    if load:
+        model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
@@ -28,7 +30,7 @@ def pretrain(epochs=10, vocab_size=391, save=True):
 
             opt_G_A2B.step()
             opt_G_B2A.step()
-            
+
             total_loss += float(cycle_loss)
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
