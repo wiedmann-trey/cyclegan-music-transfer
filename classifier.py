@@ -103,8 +103,8 @@ def train(model):
             running_loss += loss.item()
     
             # print statistics
-            if i % 5 == 1:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 5:.10f}')
+            if i % 100 == 1:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 100:.10f}')
                 running_loss = 0.0
         
         # save every epoch
