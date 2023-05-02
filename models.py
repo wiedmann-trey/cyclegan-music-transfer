@@ -38,7 +38,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim ) #,padding_idx=padding_idx
         
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
@@ -54,7 +54,7 @@ class Decoder(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Decoder, self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, padding_idx=padding_idx
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.rnn = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True) #changed batch first from True to False
