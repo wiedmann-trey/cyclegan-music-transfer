@@ -120,7 +120,7 @@ class CycleGAN(nn.Module):
             # red line
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
-
+            
             if self.mode == 'train':
 
                 DA_real = self.D_A(real_A)
