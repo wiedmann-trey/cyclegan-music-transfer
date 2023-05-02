@@ -25,7 +25,7 @@ class Discriminator(nn.Module):
         x = x @ self.embedding.weight # embeddings for output of softmax
         _,x = self.gru(x) # we just want the last hidden state
         x = self.classify(x)
-        x = torch.sigmoid(x) # want [0,1]
+        #x = torch.sigmoid(x) # want [0,1] apparently we dont want sigmoid, because for LSGAN, it encourages our samples to be close to the decision boundary
         return x
 
 class Encoder(nn.Module):
