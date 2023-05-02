@@ -114,11 +114,11 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            fake_B, fake_B_toks = self.G_A2B(real_A)
+            fake_B, fake_B_toks = self.G_A2B(real_A.float())
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
             # red line
-            fake_A, fake_A_toks = self.G_B2A(real_B)
+            fake_A, fake_A_toks = self.G_B2A(real_B.float())
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
             
             fake_B, fake_B_toks = fake_B.cuda(), fake_B_toks.cuda()
@@ -129,8 +129,8 @@ class CycleGAN(nn.Module):
 
             if self.mode == 'train':
 
-                DA_real = self.D_A(real_A)
-                DB_real = self.D_B(real_B)
+                DA_real = self.D_A(real_A.float())
+                DB_real = self.D_B(real_B.float())
 
                 DA_real = DA_real.cuda()
                 DB_real = DB_real.cuda()
