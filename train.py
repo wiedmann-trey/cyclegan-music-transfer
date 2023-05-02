@@ -89,4 +89,4 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
         torch.save(model.state_dict(), 'model.pth')
 
 if __name__=="__main__":
-    pretrain()
+    train()
