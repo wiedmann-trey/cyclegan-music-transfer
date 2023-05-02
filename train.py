@@ -41,7 +41,7 @@ def train(epochs=1, vocab_size=391, save=True):
             opt_G_B2A.step()
             opt_D_A.step()
             opt_D_B.step()
-            total_loss += g_A2B_loss
+            total_loss += float(g_A2B_loss)
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
