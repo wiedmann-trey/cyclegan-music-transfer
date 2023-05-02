@@ -118,9 +118,9 @@ class CycleGAN(nn.Module):
             real_A_int = real_A
             real_B_int = real_B
             
-            real_a = torch.nn.functional.one_hot(real_a, num_classes=(self.vocab_size)).float().cuda()
-            real_b = torch.nn.functional.one_hot(real_b, num_classes=(self.vocab_size)).float().cuda()
-            
+            real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float().cuda()
+            real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float().cuda()
+
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
