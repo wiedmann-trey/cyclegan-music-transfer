@@ -113,6 +113,19 @@ class CycleGAN(nn.Module):
             self.padding_idx = padding_idx
             self.vocab_size = vocab_size
 
+        def pretrain(self, real_A, real_B):
+            real_A_int = real_A
+            real_B_int = real_B
+            
+            real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float()
+            real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float()
+
+            fake_B, _ = self.G_A2B(real_A)
+
+            fake_A, _ = self.G_B2A(real_B)
+
+            return cycle_loss(real_A_int, fake_B, real_B_int, fake_A, self.padding_idx)
+
         def forward(self, real_A, real_B):
             # blue line
             real_A_int = real_A
