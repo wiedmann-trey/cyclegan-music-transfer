@@ -116,8 +116,8 @@ class CycleGAN(nn.Module):
             # blue line
             real_A_int = real_A.clone().cuda()
             real_B_int = real_B.clone().cuda()
-            real_A.float()
-            real_B.float()
+            real_A = real_A.float()
+            real_B = real_B.float()
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
