@@ -111,6 +111,7 @@ class Generator(nn.Module):
             outputs = torch.cat([outputs, decoder_output], dim=1)
 
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
+            argMax = torch.squeeze(argMax, dim=-1)
             max_output[:,t] = argMax
 
             decoder_input = argMax
