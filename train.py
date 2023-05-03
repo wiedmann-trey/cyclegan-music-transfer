@@ -70,12 +70,14 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
             cycle_loss, g_A2B_loss, g_B2A_loss, d_A_loss, d_B_loss = model(real_a, real_b)
             
             g_A2B_loss.backward(retain_graph=True)
-            g_B2A_loss.backward(retain_graph=True)
+            g_B2A_loss.backward()
+            
+            opt_G_A2B.step()
+            opt_G_B2A.step()
+
             d_A_loss.backward(retain_graph=True)
             d_B_loss.backward()
 
-            opt_G_A2B.step()
-            opt_G_B2A.step()
             opt_D_A.step()
             opt_D_B.step()
             total_loss += float(g_A2B_loss)

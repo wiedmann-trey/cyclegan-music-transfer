@@ -16,7 +16,7 @@ class Discriminator(nn.Module):
 
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Discriminator, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)
@@ -27,7 +27,7 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         x = input
-        x = x @ self.embedding.weight # embeddings for output of softmax
+        x = self.embedding(x) # embeddings for output of softmax
         _,x = self.gru(x) # we just want the last hidden state
         x = self.classify(x)
         #x = torch.sigmoid(x) # want [0,1] apparently we dont want sigmoid, because for LSGAN, it encourages our samples to be close to the decision boundary
@@ -38,7 +38,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        self.embedding = nn.Embedding(vocab_size, embedding_dim ) #,padding_idx=padding_idx
+        self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #,padding_idx=padding_idx
         
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
@@ -46,7 +46,7 @@ class Encoder(nn.Module):
         
     def forward(self, input):
         x = input # [batch_size, max_len, vocab_size]
-        x = x @ self.embedding.weight # embeddings for output of softmax
+        x = self.embedding(x) # embeddings for output of softmax
         _,hidden = self.gru(x)
         return hidden
     
@@ -80,7 +80,7 @@ class Generator(nn.Module):
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.decoder = Decoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    def forward(self, input, teacher_force_ratio=0.5):
+    def forward(self, input):
         #input is [batch_size, sentence_len, vocab_size]
         print(input.shape)
         max_len = input.shape[1]
@@ -164,9 +164,6 @@ class CycleGAN(nn.Module):
             
             if self.mode == 'train':
 
-                DA_real = self.D_A(real_A)
-                DB_real = self.D_B(real_B)
-
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
 
@@ -181,6 +178,12 @@ class CycleGAN(nn.Module):
                 g_B2A_loss = self.l2loss(DA_fake, torch.ones_like(DA_fake)) + c_loss
 
                 # Discriminator losses
+                DA_real = self.D_A(real_A)
+                DB_real = self.D_B(real_B)
+
+                fake_A = fake_A.clone().detach()
+                fake_B = fake_B.clone().detach()
+
                 d_A_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real))
                 d_A_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake))
                 d_A_loss = (d_A_loss_real + d_A_loss_fake) / 2
