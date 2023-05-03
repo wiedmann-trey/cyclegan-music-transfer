@@ -104,22 +104,24 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     input_song = split_midi(input_song_path, 60, 'testing')[0]
     input_song = numpy_to_torch(input_song)
 
-    input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
     
-    #input_song = input_song[None, :]
-    input_song = torch.reshape(input_song, (1, 550, 391))
-    # Generate a time-shift representation of the output song
-    if genre == 'jazz':
-        softmax_output, output_song = model.G_A2B(input_song)
+    # input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
     
-    elif genre == 'classical':
-        softmax_output, output_song = model.G_B2A(input_song)
-    else:
-        raise ValueError("Invalid genre specified")
-    print(softmax_output)
-    softmax_output = torch.squeeze(softmax_output)
-    softmax_output = softmax_output.detach().cpu().numpy()
-    np.savetxt('SADsoftmax.txt', softmax_output)
+    # #input_song = input_song[None, :]
+    # input_song = torch.reshape(input_song, (1, 300, 391))
+    # # Generate a time-shift representation of the output song
+    # if genre == 'jazz':
+    #     softmax_output, output_song = model.G_A2B(input_song)
+    
+    # elif genre == 'classical':
+    #     softmax_output, output_song = model.G_B2A(input_song)
+    # else:
+    #     raise ValueError("Invalid genre specified")
+    # print(softmax_output)
+    # softmax_output = torch.squeeze(softmax_output)
+    # softmax_output = softmax_output.detach().cpu().numpy()
+    # np.savetxt('SADsoftmax.txt', softmax_output)
+    output_song = input_song
     output_song = output_song.detach().cpu().numpy()
     mask = np.logical_and(output_song != 388, output_song != 389, output_song != 390)
     output_song = output_song[mask]
@@ -131,7 +133,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song)
+    output_song = muspy.from_event_representation(output_song, resolution=384)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)

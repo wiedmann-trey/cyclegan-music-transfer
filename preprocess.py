@@ -118,6 +118,7 @@ def split_midi(midi_path, time_interval, header):
         for i in split_mus.tracks:
             if not i.is_drum:
                 new_mus.tracks.append(i)
+        new_mus = new_mus.adjust_resolution(48)
         split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False)
         file_name = f"{new_path}_{subinterval}.npy" # create a unique filename based on header and subinterval
         final_path = os.path.join(genre_path, file_name)
