@@ -32,11 +32,12 @@ def numpy_to_torch(folder_path):
             end_token = np.array([389])
             timeshift = np.ndarray.flatten(timeshift)
             timeshift = np.concatenate([start_token, timeshift, end_token])
-            if len(timeshift) < 550:
+            #print(len(timeshift))
+            if len(timeshift) > 300:
+                timeshift = timeshift[:300]
                 # append the array to the list
-                timeshifts.append(timeshift)
-            else:
-                continue
+            timeshifts.append(timeshift)   
+
             #print(timeshift)
     timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
     timeshifts = pad_sequence(timeshifts, padding_value=390, batch_first=True)
