@@ -181,9 +181,6 @@ def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:in
                                 print(e)  
                                 continue          
                             
-    #timeshifts = [torch.tensor(seq) for seq in timeshifts]
-    #timeshifts = pad_sequence(timeshifts, padding_value=0)
-    #print(timeshifts.shape)
 
     return timeshifts, labels
                
@@ -197,13 +194,7 @@ def get_test_train_samples(all_timeshifts, all_labels, first_class, second_class
             first_genre_ts.append(all_timeshifts[i])
         if all_labels[i] == second_class:
             second_genre_ts.append(all_timeshifts[i])
-    #first_genre_ts = np.ndarray(first_genre_ts)
-    #second_genre_ts = np.ndarray(second_genre_ts)
-    #genre_labels = np.array(genre_labels)
-    #genre_labels = torch.from_numpy(genre_labels)
-    #genre_labels = torch.nn.functional.one_hot(genre_labels, num_classes)
-    #first_genre_ts = np.random.shuffle(first_genre_ts)
-    #second_genre_ts = np.random.shuffle(second_genre_ts)
+
     return first_genre_ts, second_genre_ts
 
 
