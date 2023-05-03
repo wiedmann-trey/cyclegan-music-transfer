@@ -82,7 +82,7 @@ class Generator(nn.Module):
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     def forward(self, input):
         #input is [batch_size, sentence_len, vocab_size]
-        print(input.shape)
+        #print(input.shape)
         max_len = input.shape[1]
         batch_size = input.shape[0]
         vocab_size = input.shape[2]
