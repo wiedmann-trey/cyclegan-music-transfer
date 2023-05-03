@@ -53,7 +53,7 @@ class Classifier(nn.Module):
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(0.5)
 
-        self.dense3 = nn.Linear(in_features=12, out_features=self.num_classes)
+        self.dense3 = nn.Linear(in_features=9, out_features=self.num_classes)
         self.softmax = nn.Softmax(dim=1)
 
     def forward(self, x):

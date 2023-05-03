@@ -61,21 +61,21 @@ def split_midi(midi_path, time_interval, final_name):
     file_names = []
     for split_midi in split_midi_files:
         split_mus = muspy.from_mido(split_midi)
-        
         new_mus = muspy.Music()
         for i in split_mus.tracks:
             if not i.is_drum:
                 new_mus.tracks.append(i)
-        
+        low_mus = new_mus.adjust_resolution(84)
+        weird_mus = new_mus.adjust_resolution(384)
+        low_mus = muspy.to_event_representation(low_mus, use_end_of_sequence_event=False)
+        weird_mus = muspy.to_event_representation(weird_mus, use_end_of_sequence_event=False)
+        if np.array_equal(weird_mus,low_mus):
+            print("yay they're equal!")
         split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False)
-        file_name = f"{final_name}_{subinterval}.npy" # create a unique filename based on header and subinterval
-        array_mus = split_mus
-        np.save(file_name, array_mus, allow_pickle=True)
         split_muspy_events.append(split_mus)
         subinterval+=1
-        file_names.append(file_name)
-        
-    return file_names
+    
+    return split_muspy_events
 
 
 #paths = split_midi('ORIGINAL.midi', 30, 'jeez')
@@ -87,6 +87,16 @@ def testing_numpy(numpy_paths, file_head):
         file_name = f"{file_head}_{i}.mid"
         muspy.outputs.write_midi(file_name, music)
         i+=1
+
+def test_numpy(path, file_head):
+        i=0
+        x = split_midi(path, 10, 'jeez')
+        music = muspy.from_event_representation(x[1], resolution=48)
+        file_name = f"{file_head}_{i}.mid"
+        muspy.outputs.write_midi(file_name, music)
+
+test_numpy("maestro-v3.0.0/2006/MIDI-Unprocessed_02_R1_2006_01-04_ORIG_MID--AUDIO_02_R1_2006_01_Track01_wav.midi",
+           "yamaha_test")
 
 
 #testing_numpy(paths, 'test')
