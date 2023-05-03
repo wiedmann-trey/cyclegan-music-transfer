@@ -41,7 +41,7 @@ def pretrain(epochs=10, vocab_size=391, save=True, load=False):
         if save:
             torch.save(model.state_dict(), 'pretrain_model.pth')
 
-def train(epochs=10, vocab_size=391, save=True, load=True):
+def train(epochs=10, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
