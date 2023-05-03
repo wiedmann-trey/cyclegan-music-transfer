@@ -1,123 +1,129 @@
 import torch 
 import torch.nn as nn
 from torch.nn import functional as F
-
+import torch.autograd as autograd
+import torch.optim as optim
+import numpy as np
 ## DISCLAIMER: I haven't run this yet but it theoretically should work
 # once we fix the todos
+from datasets import get_classifier_data
 
 # sources for classifier model inspiration:
 # https://music-classification.github.io/tutorial/part3_supervised/tutorial.html
 # https://github.com/XiplusChenyu/Musical-Genre-Classification/blob/master/scripts/models.py
+#https://github.com/yuchenlin/lstm_sentence_classifier/blob/master/LSTM_sentence_classifier.py 
+
+class LSTMClassifier(nn.Module):
+
+    def __init__(self, embedding_dim, hidden_dim, vocab_size, label_size):
+        super(LSTMClassifier, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.embedding_dim = embedding_dim
+        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)
+        self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
+        self.hidden2label = nn.Linear(hidden_dim, label_size)
+        self.hidden = self.init_hidden(batch_size=32)
+
+    def init_hidden(self, batch_size):
+        # the first is the hidden h
+        # the second is the cell  c
+        return [autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim)), 
+                autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim))]
+
+    def forward(self, sentence):
+        # batch_size = sentence.size(0)
+        # embeds = self.word_embeddings(sentence)
+        # x = embeds.view(batch_size, -1, self.embedding_dim)
+        # x = torch.reshape(x, (-1, 32, 50))
+        # print(x.shape)
+        # print(self.hidden)
+        # lstm_out, self.hidden = self.lstm(x, self.hidden)
+        # y  = self.hidden2label(lstm_out[-1])
+        # log_probs = F.log_softmax(y)
+        # return log_probs
+        batch_size = sentence.size(0)
+        embeds = self.word_embeddings(sentence)
+        print(embeds.shape)
+        lstm_out, self.hidden = self.lstm(embeds, self.hidden)
+        y = self.hidden2label(lstm_out[:, -1, :])
+        log_probs = F.log_softmax(y, dim=1)
+        print(log_probs.shape)
+        return log_probs
 
 
-class ConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, pooling_size=2, stride=1, padding=1):
-        super(self).__init__()
-        self.conv_layer = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
-        self.batch_norm = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU()
-        self.max_pool = nn.MaxUnpool2d(kernel_size=pooling_size)
+def get_accuracy(truth, pred):
+     assert len(truth)==len(pred)
+     right = 0
+     for i in range(len(truth)):
+         if truth[i]==pred[i]:
+             right += 1.0
+     return right/len(truth)
 
-    def forward(self, x):
-        x = self.conv_layer(x)
-        x = self.batch_norm(x)
-        x = self.relu(x)
-        x = self.max_pool(x)
-        return x
-
-class Classifier(nn.Module):
-    def __init__(self, num_classes):
-        super().__init__()
-
-        self.num_classes = num_classes # number of classes we are predicting
-
-        self.conv1 = ConvBlock(in_channels=1, out_channels=64, kernel_size=3, pooling_size=2, stride=1, padding=1)
-        self.conv2 = ConvBlock(in_channels=64, out_channels=128, kernel_size=3, pooling_size=2, stride=1, padding=1)
-        self.conv3 = ConvBlock(in_channels=128, out_channels=256, kernel_size=3, pooling_size=4, stride=1, padding=1)
-        self.conv4 = ConvBlock(in_channels=256, out_channels=512, kernel_size=3, pooling_size=4, stride=1, padding=1)
-
-        self.dense1 = nn.Linear(in_features=2048, out_features=1024)
-        self.relu1 = nn.ReLU()
-        self.dropout1 = nn.Dropout(0.5)
-
-        self.dense2 = nn.Linear(in_features=1024, out_features=256)
-        self.relu2 = nn.ReLU()
-        self.dropout2 = nn.Dropout(0.5)
-
-        self.dense3 = nn.Linear(in_features=256, out_features=self.num_classes)
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        print("input shape", x.shape)
-
-        x = self.conv1(x)
-        x = self.conv2(x)
-        x = self.conv3(x)
-        x = self.conv4(x)
-
-        x = self.dense1(x)
-        x = self.relu1(x)
-        x = self.dropout1(x)
-
-        x = self.dense2(x)
-        x = self.relu2(x)
-        x = self.dropout2(x)
-
-        x = self.dense3(x)
-        x = self.softmax(x)
-
-        return x
-    
 # train and test from pytorch documentation: 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
 def train(model):
-    loss_func = nn.CrossEntropyLoss()
+    
+    best_dev_acc = 0.0
+    
+    loss_function = nn.NLLLoss()
+    optimizer = optim.Adam(model.parameters(),lr = 1e-3)
+
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
+    #loss_func = nn.CrossEntropyLoss()
+    #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
-
     for epoch in range(num_epochs):
         running_loss = 0.0
-        for i, data in enumerate(pop_rock_trainloader, 0): # TODO: add our train data loader here
-            # get the inputs; data is a list of [inputs, labels]
-            # TODO: what format will the data be in??
-            inputs, labels = data 
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model(inputs)
-            loss = loss_func(outputs, labels)
-            loss.backward()
-            optimizer.step()
+        for i, data in enumerate(pop_jazz_train_loader):
+            timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
+        
+            with torch.autograd.set_detect_anomaly(True):
+                outputs = model(timeshift)
+                #timeshift_label = torch.squeeze(timeshift_label)
+                loss = nn.functional.cross_entropy(outputs, timeshift_label)
+                loss.backward(retain_graph=True)
+                optimizer.step()
+            running_loss += loss.item()
 
             # print statistics
-            running_loss += loss.item()
-            if i % 2000 == 1999:    # print every 2000 mini-batches
-                print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+            if i % 100 == 1:    # print every 2000 mini-batches
+                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 100:.10f}')
                 running_loss = 0.0
+        
+        # save every epoch
+        torch.save(model.state_dict(), f'classifier_epoch{epoch}_model.pth')
 
     print('Finished Training')
 
 def test(model):
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data()
     correct = 0
     total = 0
 
     with torch.no_grad():
-        for data in testloader: # TODO: replace with test data loader
-            inputs, labels = data
-            outputs = model(inputs)
-
+        for data in pop_jazz_test_loader:
+            timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
+            #timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
+            
+            outputs = model(timeshift)#[1]
+            
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            total += timeshift_label.size(0)
+
+            total += timeshift_label.size(0)
+            correct += (predicted == timeshift).sum().item()
 
     print(f'Accuracy of the network on the {total} test inputs: {100 * correct // total} %')
 
 
 if __name__ == '__main__':
-    classifier = Classifier(num_classes=3) # TODO: 3 for pop, jazz, classical ??
+    EMBEDDING_DIM = 50
+    HIDDEN_DIM = 50
+    EPOCH = 100
+    classifier = LSTMClassifier(embedding_dim=EMBEDDING_DIM,hidden_dim=HIDDEN_DIM,
+                           vocab_size=391,label_size=2)
     train(classifier)
     test(classifier)

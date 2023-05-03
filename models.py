@@ -79,19 +79,26 @@ class Generator(nn.Module):
         
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.decoder = Decoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
-    
+        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
     def forward(self, input, teacher_force_ratio=0.5):
         #input is [batch_size, sentence_len, vocab_size]
+        print(input.shape)
         max_len = input.shape[1]
         batch_size = input.shape[0]
         vocab_size = input.shape[2]
 
         hidden = self.encoder(input)
+        if self.device == 'cuda':
+            outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
+            max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
 
-        outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
-        max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
+            decoder_input = 388*torch.ones(batch_size, dtype=torch.int32).cuda() # start token
+        else: 
+            outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True) #, requires_grad=False)
+            max_output = torch.zeros(batch_size, max_len)#.cuda() #, requires_grad=False)
 
-        decoder_input = 388*torch.ones(batch_size, dtype=torch.int32).cuda() # start token
+            decoder_input = 388*torch.ones(batch_size, dtype=torch.int32) #.cuda() # start token
+
         max_output[:,0] = decoder_input
 
         start_token = torch.nn.functional.one_hot(decoder_input.long(), num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
