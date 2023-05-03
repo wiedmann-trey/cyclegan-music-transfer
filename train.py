@@ -71,7 +71,6 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward(retain_graph=True)
-            cycle_loss.backward(retain_graph=True)
             d_A_loss.backward(retain_graph=True)
             d_B_loss.backward()
 
