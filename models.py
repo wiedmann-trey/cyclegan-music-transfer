@@ -75,12 +75,13 @@ class Decoder(nn.Module):
         return x, hidden
 
 class Generator(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512, pretrain=False):
         super(Generator, self).__init__()
         
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.decoder = Decoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.pretrain = pretrain
     def forward(self, input):
         #input is [batch_size, sentence_len, vocab_size]
         #print(input.shape)
@@ -113,8 +114,10 @@ class Generator(nn.Module):
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
             argMax = torch.squeeze(argMax, dim=-1)
             max_output[:,t] = argMax
-
-            decoder_input = argMax
+            if self.pretrain:
+                decoder_input = input_toks[:,t]
+            else:
+                decoder_input = argMax
 
         return outputs, max_output
     
@@ -122,9 +125,9 @@ class Generator(nn.Module):
 class CycleGAN(nn.Module):
         def __init__(self, vocab_size, padding_idx, mode='train', lamb=10):
             super(CycleGAN, self).__init__()
-            assert mode in ["train", "A2B", "B2A"]
-            self.G_A2B = Generator(vocab_size, padding_idx)
-            self.G_B2A = Generator(vocab_size, padding_idx)
+            assert mode in ["train", "A2B", "B2A", "pretrain"]
+            self.G_A2B = Generator(vocab_size, padding_idx, pretrain=(mode == "pretrain"))
+            self.G_B2A = Generator(vocab_size, padding_idx, pretrain=(mode == "pretrain"))
             self.D_A = Discriminator(vocab_size, padding_idx)
             self.D_B = Discriminator(vocab_size, padding_idx)
             self.l2loss = nn.MSELoss(reduction="mean")
