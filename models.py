@@ -67,6 +67,7 @@ class Decoder(nn.Module):
         )
 
     def forward(self, input, hidden):
+        hidden = hidden.float()
         x = input # [batch_size]
         x = self.embedding(x) # [batch_size, embedding]
         x = torch.unsqueeze(x, dim=1) # [batch_size, 1, embedding]
