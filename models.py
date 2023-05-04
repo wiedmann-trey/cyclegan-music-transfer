@@ -87,6 +87,7 @@ class Generator(nn.Module):
         max_len = input.shape[1]
         batch_size = input.shape[0]
         vocab_size = input.shape[2]
+        input_toks = input.max(-1)[1]
         hidden = self.encoder(input)
         if self.device == 'cuda':
             outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
@@ -113,7 +114,7 @@ class Generator(nn.Module):
             argMax = torch.squeeze(argMax, dim=-1)
             max_output[:,t] = argMax
 
-            decoder_input = argMax
+            decoder_input = input_toks[:,t]
 
         return outputs, max_output
     
