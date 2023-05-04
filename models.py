@@ -67,7 +67,7 @@ class Encoder(nn.Module):
         #x = torch.tensor(x, dtype=torch.long)
         #x = self.embedding(x) # embeddings for output of softmax
         x = x @ self.embedding.weight
-        print(x.shape)
+        #print(x.shape)
         #x = torch.squeeze(x, dim=1)
         _,hidden = self.gru(x)
         return hidden
@@ -126,21 +126,21 @@ class Generator(nn.Module):
 
         start_token = torch.nn.functional.one_hot(decoder_input, num_classes=vocab_size).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
-        print("outputs")
-        print(outputs)
+        #print("outputs")
+        #print(outputs)
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
-            if t % 200 == 0:
+            if t % 400 == 0:
                 print("decoder output")
                 print(decoder_output)
             outputs = torch.cat([outputs, decoder_output], dim=1)
-            if t % 200 == 0:
+            if t % 400 == 0:
                 print("outputs after concat")
                 print(decoder_output)
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
             argMax = torch.squeeze(argMax, dim=-1)
-            if t % 200 == 0:
+            if t % 400 == 0:
                 print("argmax")
                 print(argMax)
             
@@ -218,8 +218,8 @@ class CycleGAN(nn.Module):
 
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
-                print("cycle A")
-                print(cycle_A.shape)
+                #print("cycle A")
+                #print(cycle_A.shape)
                 # Cycle loss
                 cycle_A = torch.permute(cycle_A, (0, 2, 1))
                 cycle_B = torch.permute(cycle_B, (0, 2, 1))

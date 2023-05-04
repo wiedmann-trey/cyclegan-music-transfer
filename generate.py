@@ -134,11 +134,11 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     #softmax_output = softmax_output.detach().cpu().numpy()
     #np.savetxt('SADsoftmax.txt', softmax_output)
     #output_song = input_song
-    print('output song')
-    print(output_song)
-    print('softmax output')
-    print(softmax_output)
-    print(len(output_song))
+    #print('output song')
+    #print(output_song)
+    #print('softmax output')
+    #print(softmax_output)
+    #print(len(output_song))
     softmax_output = softmax_output.detach().cpu().numpy()
     output_song = output_song.detach().cpu().numpy()
     mask = np.logical_and(output_song != 388, output_song != 389, output_song != 390)
@@ -157,8 +157,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('model_pretrain.pth', 
-                  'maestro-v3.0.0/2014/MIDI-UNPROCESSED_01-03_R1_2014_MID--AUDIO_03_R1_2014_wav--3.midi', 
+    generate_song('pretrain_modelPLSWORK.pth', 
+                  'ORIGINAL.midi', 
                   'TryingAgain.mid', 
                   genre='jazz', 
                   vocab_size=391)
