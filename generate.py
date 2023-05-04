@@ -120,9 +120,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
     # this was to try to pass it in as a batch
     input_song = torch.reshape(input_song, (1, 402, 391))
-    input_song = torch.cat((input_song, input_song))
+    #input_song = torch.cat((input_song, input_song))
     #print(input_song.shape)
-    input_song = torch.reshape(input_song, (2, 402, 391))
+    #input_song = torch.reshape(input_song, (2, 402, 391))
     
 
 
@@ -157,14 +157,14 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=48, use_single_note_off_event=True)
+    output_song = muspy.from_event_representation(output_song, resolution=48, use_single_note_off_event=False)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('MODELS/pretrain_1_epoch.pth', 
-                  'maestro-v3.0.0/2009/MIDI-Unprocessed_02_R1_2009_01-02_ORIG_MID--AUDIO_02_R1_2009_02_R1_2009_01_WAV.midi', 
+    generate_song('pretrain_model_15.pth', 
+                  'ORIGINAL.midi', 
                   'TryingAgain.mid', 
                   genre='jazz', 
                   vocab_size=391)

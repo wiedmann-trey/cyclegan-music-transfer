@@ -7,12 +7,13 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
-        model.load_state_dict(torch.load("model.pth"))
+        model = model.to(device)
+        model.load_state_dict(torch.load("model.pth", map_location=device))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
-    i = 1
+    b = 1
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
@@ -44,21 +45,21 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
-            path = "pretrain_model" + str(i) + ".pth"
+            path = "pretrain_model" + str(b) + ".pth"
             torch.save(model.state_dict(), path)
 
-def train(epochs=10, vocab_size=391, save=True, load=False):
+def train(epochs=10, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
     if load:
-        model.load_state_dict(torch.load("model.pth"))
+        model.load_state_dict(torch.load("pretrain_model_15.pth", map_location=torch.device(device)))
     model = model.to(device)
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
     opt_D_A = torch.optim.Adam(model.D_A.parameters())
     opt_D_B = torch.optim.Adam(model.D_B.parameters())
-
+    b=1
     for epoch in range(epochs):
         model.train()
         print(f"epoch:{epoch}")
@@ -90,10 +91,12 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'modelPLS.pth')
+            path = "pretrain_model" + str(b) + ".pth"
+            torch.save(model.state_dict(), path)
+            b+=1
 
     if save:
         torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
-    pretrain()
+    train()

@@ -58,8 +58,7 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         #if its just a dense layer, and then al things are 0, so its just not giving new values
         #so try embedding! 
-        #self.embedding.weight.requires_grad = False
-        #self.embedding.weight.requires_grad_(False)
+
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
@@ -227,6 +226,7 @@ class CycleGAN(nn.Module):
                 c_loss = self.lamb * cycle_loss(real_A_int, cycle_A, real_B_int, cycle_B, self.padding_idx)
 
                 # Generator losses
+                #reconstruction_loss = F.cross_entropy(probs, x.argmax(dim=1))
                 g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
                 g_B2A_loss = self.l2loss(DA_fake, torch.ones_like(DA_fake)) + c_loss
 
