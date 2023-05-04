@@ -30,6 +30,9 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
             
             cycle_loss.backward()
 
+            torch.nn.utils.clip_grad_norm_(model.G_A2B.parameters(), 100)
+            torch.nn.utils.clip_grad_norm_(model.G_B2A.parameters(), 100)
+
             opt_G_A2B.step()
             opt_G_B2A.step()
 
@@ -71,9 +74,6 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward()
-            
-            torch.nn.utils.clip_grad_norm_(model.G_A2B.parameters(), 100)
-            torch.nn.utils.clip_grad_norm_(model.G_B2A.parameters(), 100)
 
             opt_G_A2B.step()
             opt_G_B2A.step()
