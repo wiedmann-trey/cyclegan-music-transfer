@@ -126,17 +126,25 @@ class Generator(nn.Module):
 
         start_token = torch.nn.functional.one_hot(decoder_input, num_classes=vocab_size).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
-
+        print("outputs")
+        print(outputs)
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
+            if t % 200 == 0:
+                print("decoder output")
+                print(decoder_output)
             outputs = torch.cat([outputs, decoder_output], dim=1)
-
+            if t % 200 == 0:
+                print("outputs after concat")
+                print(decoder_output)
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
-            if t % 20 == 0:
-                print(argMax)
             argMax = torch.squeeze(argMax, dim=-1)
+            if t % 200 == 0:
+                print("argmax")
+                print(argMax)
             
+
             # top_n_probs, top_n_indices = torch.sort(outputs, descending=True, dim=1)
             # top_4_probs = top_n_probs[4]
             # top_4_indices = top_n_indices[4]
@@ -154,9 +162,9 @@ class Generator(nn.Module):
             else:
                 decoder_input = argMax #out_index #argMax
             #max_output[:,t] = torch.squeeze(out_index, dim=-1)
-            if t % 20 == 0:
+            if t % 200 == 0:
+                print("max output")
                 print(max_output)
-                print(max_output.shape)
         return outputs, max_output
     
 
@@ -194,8 +202,8 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            real_A_int = real_A
-            real_B_int = real_B
+            real_A_int = real_A.clone().detach()
+            real_B_int = real_B.clone().detach()
             
             real_A = torch.nn.functional.one_hot(real_A, num_classes=self.vocab_size).float()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
@@ -210,7 +218,8 @@ class CycleGAN(nn.Module):
 
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
-
+                print("cycle A")
+                print(cycle_A.shape)
                 # Cycle loss
                 cycle_A = torch.permute(cycle_A, (0, 2, 1))
                 cycle_B = torch.permute(cycle_B, (0, 2, 1))
