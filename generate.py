@@ -86,7 +86,6 @@ def numpy_to_torch(input_song):
     timeshift = np.ndarray.flatten(input_song)
     start_token = np.array([388])
     end_token = np.array([389])
-    timeshift = np.concatenate([start_token, timeshift, end_token])
     if len(timeshift) > 400:
             timeshift = timeshift[:400]
     timeshift = np.concatenate([start_token, timeshift, end_token])
@@ -111,13 +110,11 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     #getting_resolution = MidiFile(model_path)
     #getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='lifo')
     #resolution = getting_resolution.resolution
-
-    input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
-    # this was to try to pass it in as a batch
-    input_song = torch.reshape(input_song, (402, 391))
-    input_song = torch.cat((input_song, input_song))
+    print(input_song)
     print(input_song.shape)
-    input_song = torch.reshape(input_song, (2, 402, 391))
+    input_song = torch.nn.functional.one_hot(input_song.long(), num_classes=(vocab_size)).float()
+    # this was to try to pass it in as a batch
+    input_song = torch.reshape(input_song, (1, 402, 391))
     
 
 
@@ -141,15 +138,14 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     #print(len(output_song))
     softmax_output = softmax_output.detach().cpu().numpy()
     output_song = output_song.detach().cpu().numpy()
+    print(output_song)
+    print(output_song.shape)
     mask = np.logical_and(output_song != 388, output_song != 389, output_song != 390)
     output_song = output_song[mask]
     output_song = (np.round(output_song)).astype(int)
     output_song = np.ndarray.flatten(output_song)
-    print(output_song)
-    print(len(output_song))
 
     output_song = output_song.reshape(-1, 1)
-    print(output_song)
     np.savetxt('SAD.txt', output_song)
     output_song = muspy.from_event_representation(output_song, resolution=384)
     

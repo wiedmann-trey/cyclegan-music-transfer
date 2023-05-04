@@ -22,9 +22,6 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
         num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
-            if i % 40 == 0:
-                print("real_a")
-                print(real_a)
             real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()
