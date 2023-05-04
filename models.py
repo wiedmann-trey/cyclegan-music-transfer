@@ -162,9 +162,9 @@ class Generator(nn.Module):
             else:
                 decoder_input = argMax #out_index #argMax
             #max_output[:,t] = torch.squeeze(out_index, dim=-1)
-            #if t % 200 == 0:
-            #    print("max output")
-            #    print(max_output)
+            if t % 200 == 0:
+                print("max output")
+                print(max_output)
         return outputs, max_output
     
 

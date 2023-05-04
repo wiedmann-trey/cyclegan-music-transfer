@@ -113,14 +113,13 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     copy_song = input_song.detach().cpu().numpy()
     print(copy_song)
 
-
-    #getting_resolution = MidiFile(model_path)
-    #getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='lifo')
-    #resolution = getting_resolution.resolution
+    getting_resolution = MidiFile(input_song_path)
+    getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='lifo')
+    resolution = getting_resolution.resolution
 
     input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
     # this was to try to pass it in as a batch
-    input_song = torch.reshape(input_song, (402, 391))
+    input_song = torch.reshape(input_song, (1, 402, 391))
     input_song = torch.cat((input_song, input_song))
     #print(input_song.shape)
     input_song = torch.reshape(input_song, (2, 402, 391))
@@ -158,16 +157,16 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=384)
+    output_song = muspy.from_event_representation(output_song, resolution=48)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('pretrain_1_epoch.pth', 
-                  'ORIGINAL.midi', 
+    generate_song('MODELS/pretrain_1_epoch.pth', 
+                  'lmd_matched/C/V/C/TRCVCPA128E0788786/af5ebd20da95f34d12297397dd722bc5.mid', 
                   'TryingAgain.mid', 
-                  genre='classical', 
+                  genre='jazz', 
                   vocab_size=391)
     
 #if __name__=="__main__":
