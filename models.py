@@ -15,7 +15,7 @@ def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
 
 class Discriminator(nn.Module):
 
-    def __init__(self, vocab_size, padding_idx, embedding_dim=32, hidden_dim=32):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=128):
         super(Discriminator, self).__init__()
         self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #, dtype=torch.int64)#.requires_grad_(False)
         #self.embedding.weight.requires_grad = False
@@ -35,7 +35,7 @@ class Discriminator(nn.Module):
         return x
 
 class Encoder(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=32, hidden_dim=32):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
@@ -52,7 +52,7 @@ class Encoder(nn.Module):
         return hidden
     
 class Decoder(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=32, hidden_dim=32):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Decoder, self).__init__()
         
         self.embedding = nn.Embedding(vocab_size, embedding_dim) #, padding_idx=padding_idx
@@ -75,7 +75,7 @@ class Decoder(nn.Module):
         return x, hidden
 
 class Generator(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=32, hidden_dim=32):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Generator, self).__init__()
         
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
