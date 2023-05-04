@@ -2,7 +2,7 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def pretrain(epochs=50, vocab_size=391, save=True, load=False):
+def pretrain(epochs=25, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
@@ -72,6 +72,9 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward()
             
+            torch.nn.utils.clip_grad_norm_(model.G_A2B.parameters(), 100)
+            torch.nn.utils.clip_grad_norm_(model.G_B2A.parameters(), 100)
+
             opt_G_A2B.step()
             opt_G_B2A.step()
 

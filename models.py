@@ -114,6 +114,8 @@ class Generator(nn.Module):
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
             argMax = torch.squeeze(argMax, dim=-1)
             max_output[:,t] = argMax
+
+            #if we are pretraining, we can teacher force with the input tokens since they are the desired output
             if self.pretrain:
                 decoder_input = input_toks[:,t]
             else:
