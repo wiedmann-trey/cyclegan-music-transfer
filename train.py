@@ -2,7 +2,7 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def pretrain(epochs=5, vocab_size=391, save=True, load=False):
+def pretrain(epochs=12, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
@@ -12,7 +12,7 @@ def pretrain(epochs=5, vocab_size=391, save=True, load=False):
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
-
+    i = 1
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
@@ -44,7 +44,8 @@ def pretrain(epochs=5, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'pretrain_model_0EPOCHS.pth')
+            path = "pretrain_model" + str(i) + ".pth"
+            torch.save(model.state_dict(), path)
 
 def train(epochs=10, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'

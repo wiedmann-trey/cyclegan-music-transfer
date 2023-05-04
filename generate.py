@@ -157,14 +157,14 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=48)
+    output_song = muspy.from_event_representation(output_song, resolution=48, use_single_note_off_event=True)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
     generate_song('MODELS/pretrain_1_epoch.pth', 
-                  'lmd_matched/C/V/C/TRCVCPA128E0788786/af5ebd20da95f34d12297397dd722bc5.mid', 
+                  'maestro-v3.0.0/2009/MIDI-Unprocessed_02_R1_2009_01-02_ORIG_MID--AUDIO_02_R1_2009_02_R1_2009_01_WAV.midi', 
                   'TryingAgain.mid', 
                   genre='jazz', 
                   vocab_size=391)
