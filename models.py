@@ -93,16 +93,16 @@ class Generator(nn.Module):
             outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() #, requires_grad=False)
             max_output = torch.zeros(batch_size, max_len).cuda() #, requires_grad=False)
 
-            decoder_input = 388*torch.ones(batch_size, dtype=torch.int32).cuda() # start token
+            decoder_input = 388*torch.ones(batch_size, dtype=torch.int64).cuda() # start token
         else: 
             outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True) #, requires_grad=False)
             max_output = torch.zeros(batch_size, max_len)#.cuda() #, requires_grad=False)
 
-            decoder_input = 388*torch.ones(batch_size, dtype=torch.int32) #.cuda() # start token
+            decoder_input = 388*torch.ones(batch_size, dtype=torch.int64) #.cuda() # start token
 
         max_output[:,0] = decoder_input
 
-        start_token = torch.nn.functional.one_hot(decoder_input, num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
+        start_token = torch.nn.functional.one_hot(decoder_input, num_classes=vocab_size).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
 
         for t in range(1,max_len):
