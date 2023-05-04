@@ -84,11 +84,15 @@ def numpy_to_torch(input_song):
     - data: list of numpy arrays, contains all unpickled numpy arrays from the folder.
     """
     timeshift = np.ndarray.flatten(input_song)
-    timeshift = timeshift[:548]
     start_token = np.array([388])
     end_token = np.array([389])
     timeshift = np.concatenate([start_token, timeshift, end_token])
+    if len(timeshift) > 400:
+            timeshift = timeshift[:400]
+    timeshift = np.concatenate([start_token, timeshift, end_token])
     timeshift = torch.tensor(timeshift, requires_grad=False)
+    print(len(timeshift))
+    
 
     #timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
     #timeshifts = pad_sequence(timeshifts, padding_value=390, batch_first=True)
@@ -111,7 +115,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
     
     #input_song = input_song[None, :]
-    input_song = torch.reshape(input_song, (1, 300, 391))
+    input_song = torch.reshape(input_song, (1, 402, 391))
     # Generate a time-shift representation of the output song
     if genre == 'jazz':
         softmax_output, output_song = model.G_A2B(input_song)

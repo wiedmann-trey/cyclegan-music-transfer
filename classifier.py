@@ -10,7 +10,6 @@ from datasets import get_classifier_data
 # https://music-classification.github.io/tutorial/part3_supervised/tutorial.html
 # https://github.com/XiplusChenyu/Musical-Genre-Classification/blob/master/scripts/models.py
 
-
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, pooling_size=2, stride=1, padding=1):
         super().__init__()
