@@ -116,7 +116,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     # this was to try to pass it in as a batch
     input_song = torch.reshape(input_song, (402, 391))
     input_song = torch.cat((input_song, input_song))
-    print(input_song.shape)
+    #print(input_song.shape)
     input_song = torch.reshape(input_song, (2, 402, 391))
     
 
@@ -145,11 +145,11 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song[mask]
     output_song = (np.round(output_song)).astype(int)
     output_song = np.ndarray.flatten(output_song)
-    print(output_song)
+    #print(output_song)
     print(len(output_song))
 
     output_song = output_song.reshape(-1, 1)
-    print(output_song)
+    #print(output_song)
     np.savetxt('SAD.txt', output_song)
     output_song = muspy.from_event_representation(output_song, resolution=384)
     
@@ -158,9 +158,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
 
 if __name__=="__main__":
     generate_song('pretrain_modelPLSWORK.pth', 
-                  'ORIGINAL.midi', 
+                  'maestro-v3.0.0/2013/ORIG-MIDI_01_7_6_13_Group__MID--AUDIO_02_R1_2013_wav--1.midi', 
                   'TryingAgain.mid', 
-                  genre='jazz', 
+                  genre='classical', 
                   vocab_size=391)
     
 #if __name__=="__main__":
