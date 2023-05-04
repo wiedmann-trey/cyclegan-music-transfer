@@ -138,20 +138,6 @@ lmd_matched/
 maestro-v3.0.0/
 .maestro-v3.0.0/
 
-.lol test folder 
-./ lol test folder
-lol test folder/
-/lol test folder
-lol test folder/
-.lol test folder/
-
-.faulty_midis
-./ faulty_midis
-faulty_midis/
-/faulty_midis
-faulty_midis/
-.faulty_midis/
-
 .incorrect_genre_midis
 ./ incorrect_genre_midis
 incorrect_genre_midis/
@@ -159,4 +145,13 @@ incorrect_genre_midis/
 incorrect_genre_midis/
 .incorrect_genre_midis/
 
+older_numpy_events/
+/older_numpy_events
+
+/saved_classifier_models
+saved_classifier_models/
+
+/saved_classifier_models
+.saved_classifier_models
+.saved_classifier_models/
 

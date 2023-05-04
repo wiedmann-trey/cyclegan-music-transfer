@@ -139,9 +139,9 @@ class Generator(nn.Module):
             #    print("outputs after concat")
             #    print(decoder_output)
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
-            argMax = torch.squeeze(argMax, dim=-1)
-            #if t % 900000 == 0:
-            #    print("argmax")
+            #argMax = torch.squeeze(argMax, dim=-1)
+            if t % 100 == 0:
+                print("argmax yay")
             #    print(argMax)
             
 

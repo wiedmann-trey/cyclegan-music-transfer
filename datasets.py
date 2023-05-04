@@ -52,8 +52,8 @@ class ClassifierDataset(Dataset):
         return sample
 
 def get_data():
-    pop_samples = numpy_to_torch("pop_events")
-    jazz_samples = numpy_to_torch("jazz_events")
+    pop_samples = numpy_to_torch("UPDATED_POP")
+    jazz_samples = numpy_to_torch("UPDATED_JAZZ")
 
     num_samples = min(len(pop_samples), len(jazz_samples))
     num_samples_round = num_samples // 32
@@ -69,8 +69,8 @@ def get_data():
     return pop_jazz_train_loader, pop_jazz_test_loader
 
 def get_classifier_data(batch_size):
-    pop_samples = numpy_to_torch("pop_events")
-    jazz_samples = numpy_to_torch("jazz_events")
+    pop_samples = numpy_to_torch("UPDATED_POP")
+    jazz_samples = numpy_to_torch("UPDATED_JAZZ")
 
     jazz_mod = len(jazz_samples) // batch_size
     pop_mod = len(pop_samples) // batch_size
