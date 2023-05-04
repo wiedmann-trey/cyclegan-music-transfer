@@ -2,16 +2,16 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def pretrain(epochs=50, vocab_size=391, save=True, load=False):
+def pretrain(epochs=25, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
-    model = CycleGAN(vocab_size, vocab_size-1)
+    model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
 
     for epoch in range(epochs):
         model.train()
@@ -22,6 +22,7 @@ def pretrain(epochs=50, vocab_size=391, save=True, load=False):
         num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
+            print(real_a)
             real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()
@@ -39,7 +40,7 @@ def pretrain(epochs=50, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'pretrain_model.pth')
+            torch.save(model.state_dict(), 'pretrain_modelPLSWORK.pth')
 
 def train(epochs=10, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -71,7 +72,7 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward()
-            
+
             opt_G_A2B.step()
             opt_G_B2A.step()
 
@@ -84,10 +85,10 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'model.pth')
+            torch.save(model.state_dict(), 'modelPLS.pth')
 
     if save:
-        torch.save(model.state_dict(), 'model.pth')
+        torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
     pretrain()
