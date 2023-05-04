@@ -10,8 +10,8 @@ def pretrain(epochs=50, vocab_size=391, save=True, load=False):
         model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), lr=.008)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), lr=.008)
 
     for epoch in range(epochs):
         model.train()
