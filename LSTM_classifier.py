@@ -4,6 +4,7 @@ from torch.nn import functional as F
 import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
+import copy
 ## DISCLAIMER: I haven't run this yet but it theoretically should work
 # once we fix the todos
 from datasets import get_classifier_data
@@ -22,7 +23,7 @@ class LSTMClassifier(nn.Module):
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
-        self.hidden = self.init_hidden(batch_size=32)
+        self.hidden = 0 #self.init_hidden(batch_size=32)
 
     def init_hidden(self, batch_size):
         # the first is the hidden h
@@ -43,11 +44,14 @@ class LSTMClassifier(nn.Module):
         # return log_probs
         batch_size = sentence.size(0)
         embeds = self.word_embeddings(sentence)
-        print(embeds.shape)
-        lstm_out, self.hidden = self.lstm(embeds, self.hidden)
+        #print(embeds.shape)
+        hidden = copy.copy(self.init_hidden(32))
+        #print("here 49")
+        lstm_out, self.hidden = self.lstm(embeds, hidden)
+        #print("51")
         y = self.hidden2label(lstm_out[:, -1, :])
         log_probs = F.log_softmax(y, dim=1)
-        print(log_probs.shape)
+        #print(log_probs.shape)
         return log_probs
 
 
@@ -84,7 +88,8 @@ def train(model):
                 #timeshift_label = torch.squeeze(timeshift_label)
                 loss = nn.functional.cross_entropy(outputs, timeshift_label)
                 loss.backward(retain_graph=True)
-                optimizer.step()
+            
+            optimizer.step()
             running_loss += loss.item()
 
             # print statistics
