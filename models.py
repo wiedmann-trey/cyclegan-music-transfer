@@ -102,7 +102,7 @@ class Generator(nn.Module):
 
         max_output[:,0] = decoder_input
 
-        start_token = torch.nn.functional.one_hot(decoder_input.long(), num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
+        start_token = torch.nn.functional.one_hot(decoder_input, num_classes=(vocab_size)).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
 
         for t in range(1,max_len):
@@ -137,8 +137,8 @@ class CycleGAN(nn.Module):
             real_A_int = real_A
             real_B_int = real_B
             
-            real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float()
-            real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float()
+            real_A = torch.nn.functional.one_hot(real_A, num_classes=self.vocab_size).float()
+            real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
 
             fake_B, guesses_B = self.G_A2B(real_A)
 
@@ -156,8 +156,8 @@ class CycleGAN(nn.Module):
             real_A_int = real_A
             real_B_int = real_B
             
-            real_A = torch.nn.functional.one_hot(real_A, num_classes=(self.vocab_size)).float()
-            real_B = torch.nn.functional.one_hot(real_B, num_classes=(self.vocab_size)).float()
+            real_A = torch.nn.functional.one_hot(real_A, num_classes=self.vocab_size).float()
+            real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
 
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
