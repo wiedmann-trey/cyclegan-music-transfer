@@ -4,7 +4,7 @@ from torch.nn import functional as F
 import numpy as np
 
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
-    return F.cross_entropy(cycle_a, real_a, ignore_index=padding_index, reduction='mean') + F.cross_entropy(cycle_b, real_b, ignore_index=padding_index, reduction='mean')
+    return F.cross_entropy(cycle_a, real_a, reduction='mean') + F.cross_entropy(cycle_b, real_b, reduction='mean')
 
 
 def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
