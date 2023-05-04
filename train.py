@@ -2,7 +2,7 @@ from models import CycleGAN
 import torch
 from datasets import get_data
 
-def pretrain(epochs=25, vocab_size=391, save=True, load=False):
+def pretrain(epochs=1, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
@@ -20,8 +20,13 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
         total_acc_a = 0
         total_acc_b = 0
         num_batch = 0
+        i = 1
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
+            if i % 40 == 0:
+                
+                print(i)
+                i*=40
             real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()
@@ -39,7 +44,7 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'pretrain_model.pth')
+            torch.save(model.state_dict(), 'pretrain_model_0EPOCHS.pth')
 
 def train(epochs=10, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -84,10 +89,10 @@ def train(epochs=10, vocab_size=391, save=True, load=False):
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
-            torch.save(model.state_dict(), 'model.pth')
+            torch.save(model.state_dict(), 'modelPLS.pth')
 
     if save:
-        torch.save(model.state_dict(), 'model.pth')
+        torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
     pretrain()

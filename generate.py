@@ -64,7 +64,7 @@ def split_midi(midi_path, time_interval, final_name):
         for i in split_mus.tracks:
             if not i.is_drum:
                 new_mus.tracks.append(i)
-        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False)
+        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, use_single_note_off_event=True)
         file_name = f"{final_name}_{subinterval}.npy" # create a unique filename based on header and subinterval
         array_mus = split_mus
         #np.save(file_name, array_mus, allow_pickle=True)
@@ -84,11 +84,15 @@ def numpy_to_torch(input_song):
     - data: list of numpy arrays, contains all unpickled numpy arrays from the folder.
     """
     timeshift = np.ndarray.flatten(input_song)
-    timeshift = timeshift[:548]
     start_token = np.array([388])
     end_token = np.array([389])
+    #timeshift = np.concatenate([start_token, timeshift, end_token])
+    if len(timeshift) > 400:
+            timeshift = timeshift[:400]
     timeshift = np.concatenate([start_token, timeshift, end_token])
     timeshift = torch.tensor(timeshift, requires_grad=False)
+    print(len(timeshift))
+    
 
     #timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
     #timeshifts = pad_sequence(timeshifts, padding_value=390, batch_first=True)
@@ -102,16 +106,27 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     model = model.to(device)
     model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))#, map_location=torch.device('cpu')))
     input_song = split_midi(input_song_path, 60, 'testing')[0]
+    print(input_song)
+    print(len(input_song))
+    #print(np.reshape(np.squeeze(input_song), (-1, 2)))
     input_song = numpy_to_torch(input_song)
+    copy_song = input_song.detach().cpu().numpy()
+    print(copy_song)
 
-    getting_resolution = MidiFile(model_path)
-    getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='lifo')
-    resolution = getting_resolution.resolution
+
+    #getting_resolution = MidiFile(model_path)
+    #getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='lifo')
+    #resolution = getting_resolution.resolution
 
     input_song = torch.nn.functional.one_hot(input_song, num_classes=(vocab_size)).float()
+    # this was to try to pass it in as a batch
+    input_song = torch.reshape(input_song, (402, 391))
+    input_song = torch.cat((input_song, input_song))
+    #print(input_song.shape)
+    input_song = torch.reshape(input_song, (2, 402, 391))
     
-    #input_song = input_song[None, :]
-    input_song = torch.reshape(input_song, (1, 300, 391))
+
+
     # Generate a time-shift representation of the output song
     if genre == 'jazz':
         softmax_output, output_song = model.G_A2B(input_song)
@@ -120,29 +135,36 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         softmax_output, output_song = model.G_B2A(input_song)
     else:
         raise ValueError("Invalid genre specified")
-    print(softmax_output)
-    softmax_output = torch.squeeze(softmax_output)
+    #print(softmax_output)
+    #softmax_output = torch.squeeze(softmax_output)
+    #softmax_output = softmax_output.detach().cpu().numpy()
+    #np.savetxt('SADsoftmax.txt', softmax_output)
+    #output_song = input_song
+    #print('output song')
+    #print(output_song)
+    #print('softmax output')
+    #print(softmax_output)
+    #print(len(output_song))
     softmax_output = softmax_output.detach().cpu().numpy()
-    np.savetxt('SADsoftmax.txt', softmax_output)
-    output_song = input_song
     output_song = output_song.detach().cpu().numpy()
     mask = np.logical_and(output_song != 388, output_song != 389, output_song != 390)
     output_song = output_song[mask]
     output_song = (np.round(output_song)).astype(int)
     output_song = np.ndarray.flatten(output_song)
     print(output_song)
+    #print(output_song)
     print(len(output_song))
 
     output_song = output_song.reshape(-1, 1)
-    print(output_song)
+    #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=resolution)
+    output_song = muspy.from_event_representation(output_song, resolution=384)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('model_pretrain.pth', 
+    generate_song('pretrain_1_epoch.pth', 
                   'ORIGINAL.midi', 
                   'TryingAgain.mid', 
                   genre='classical', 

@@ -3,9 +3,23 @@ import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
 
+#if we are pretraining, we can teacher force with the input tokens since they are the desired output
+#GRU still needs a context window, 
+#for softmax, sometimes it's helpful not to do argmax directly, but to sample
+#eventually you'll be at a state where it converges but that's not necessarily accurate, 
+#like taking the weighted sum of softmax, gives you a bit more noise. 
+#np.random.choice - takes a distribution and samples one index out of it
+#to go from weighted sum to argmax -- we can use np.random choice, this will take an array of numbers and
+# take their associated probabilities, and sample based on that distribution. 
+#you're weighing the probability distribution based off the softmax distirbution
+#np.random.choice([a, b, c], [0.1, 0.7, 0.2]) it's not weighing, it's choosing. 
+#np.random.choice([0....397 (like arange)], softmax)
+#hopefully we don't have to do any window size stuff, but revisit rnn.py and generate sentences, 
+#generate sentences function from previous homework will help with sampling from distribution, 
+#hopefullywe just sample from top 5 probabilities of softmax, normalize, and then sample and use argmax
+
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
     return F.nll_loss(torch.log(cycle_a), real_a, ignore_index=padding_index, reduction='mean') + F.nll_loss(torch.log(cycle_b), real_b, ignore_index=padding_index, reduction='mean')
-
 
 def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
     acc_a = torch.sum(torch.logical_and(real_a != padding_index,  real_a==cycle_a).float())/torch.sum((real_a != padding_index).float())
@@ -17,7 +31,8 @@ class Discriminator(nn.Module):
 
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=128):
         super(Discriminator, self).__init__()
-        self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #, dtype=torch.int64)#.requires_grad_(False)
+        #self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #, dtype=torch.int64)#.requires_grad_(False)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)
@@ -39,15 +54,21 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        self.embedding = nn.Linear(vocab_size, embedding_dim, bias=False) #,padding_idx=padding_idx
-        
+        #self.embedding = nn.Linear(vocab_size, embedding_dim, bias=True) #,padding_idx=padding_idx
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        #if its just a dense layer, and then al things are 0, so its just not giving new values
+        #so try embedding! 
         #self.embedding.weight.requires_grad = False
         #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
         x = input # [batch_size, max_len, vocab_size]
-        x = self.embedding(x) # embeddings for output of softmax
+        #x = torch.tensor(x, dtype=torch.long)
+        #x = self.embedding(x) # embeddings for output of softmax
+        x = x @ self.embedding.weight
+        #print(x.shape)
+        #x = torch.squeeze(x, dim=1)
         _,hidden = self.gru(x)
         return hidden
     
@@ -105,22 +126,45 @@ class Generator(nn.Module):
 
         start_token = torch.nn.functional.one_hot(decoder_input, num_classes=vocab_size).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
-
+        #print("outputs")
+        #print(outputs)
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
+            #if t % 9000000 == 0:
+                #print("decoder output")
+                #print(decoder_output)
             outputs = torch.cat([outputs, decoder_output], dim=1)
+            #if t % 900000 == 0:
+            #    print("outputs after concat")
+            #    print(decoder_output)
+            argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
+            #argMax = torch.squeeze(argMax, dim=-1)
+            if t % 100 == 0:
+                print("argmax yay")
+            #    print(argMax)
+            
 
-            argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1) #[batch_size]
-            argMax = torch.squeeze(argMax, dim=-1)
-            max_output[:,t] = argMax
-
-            #if we are pretraining, we can teacher force with the input tokens since they are the desired output
+            # top_n_probs, top_n_indices = torch.sort(outputs, descending=True, dim=1)
+            # top_4_probs = top_n_probs[4]
+            # top_4_indices = top_n_indices[4]
+            # if t % 10 == 1:
+            #      print("top 4 indices")
+            #      print(top_4_indices)
+            #      print("top 4 probs")
+            #      print(top_4_probs)
+            # weights = torch.rand(4)
+            # out_index = torch.argmax(top_4_probs)
+            # out_index = top_4_indices[out_index]
+            max_output[:, t] = argMax
             if self.pretrain:
                 decoder_input = input_toks[:,t]
             else:
-                decoder_input = argMax
-
+                decoder_input = argMax #out_index #argMax
+            #max_output[:,t] = torch.squeeze(out_index, dim=-1)
+            #if t % 200 == 0:
+            #    print("max output")
+            #    print(max_output)
         return outputs, max_output
     
 
@@ -158,8 +202,8 @@ class CycleGAN(nn.Module):
 
         def forward(self, real_A, real_B):
             # blue line
-            real_A_int = real_A
-            real_B_int = real_B
+            real_A_int = real_A.clone().detach()
+            real_B_int = real_B.clone().detach()
             
             real_A = torch.nn.functional.one_hot(real_A, num_classes=self.vocab_size).float()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
@@ -174,7 +218,8 @@ class CycleGAN(nn.Module):
 
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
-
+                #print("cycle A")
+                #print(cycle_A.shape)
                 # Cycle loss
                 cycle_A = torch.permute(cycle_A, (0, 2, 1))
                 cycle_B = torch.permute(cycle_B, (0, 2, 1))
