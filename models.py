@@ -146,9 +146,6 @@ class CycleGAN(nn.Module):
 
             acc_a, acc_b = acc(real_A_int, guesses_B, real_B_int, guesses_A, self.padding_idx)
 
-            print(guesses_B)
-            print(real_A_int)
-
             fake_A = torch.permute(fake_A, (0, 2, 1))
             fake_B = torch.permute(fake_B, (0, 2, 1))
 
