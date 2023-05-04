@@ -75,7 +75,7 @@ class Decoder(nn.Module):
         return x, hidden
 
 class Generator(nn.Module):
-    def __init__(self, vocab_size, padding_idx, embedding_dim=8, hidden_dim=8):
+    def __init__(self, vocab_size, padding_idx, embedding_dim=32, hidden_dim=32):
         super(Generator, self).__init__()
         
         self.encoder = Encoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
@@ -146,9 +146,13 @@ class CycleGAN(nn.Module):
 
             acc_a, acc_b = acc(real_A_int, guesses_B, real_B_int, guesses_A, self.padding_idx)
 
+            print(guesses_B)
+            print(real_A_int)
+
             fake_A = torch.permute(fake_A, (0, 2, 1))
             fake_B = torch.permute(fake_B, (0, 2, 1))
 
+            
             return cycle_loss(real_A_int, fake_B, real_B_int, fake_A, self.padding_idx), acc_a, acc_b
 
         def forward(self, real_A, real_B):
