@@ -10,8 +10,8 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
         model.load_state_dict(torch.load("model.pth"))
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
 
     for epoch in range(epochs):
         model.train()
@@ -29,9 +29,6 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
             cycle_loss, acc_a, acc_b = model.pretrain(real_a, real_b)
             
             cycle_loss.backward()
-
-            torch.nn.utils.clip_grad_norm_(model.G_A2B.parameters(), 100)
-            torch.nn.utils.clip_grad_norm_(model.G_B2A.parameters(), 100)
 
             opt_G_A2B.step()
             opt_G_B2A.step()
