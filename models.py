@@ -43,7 +43,8 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         x = input
-        x = self.embedding(x) # embeddings for output of softmax
+        x = x @ self.embedding.weight
+        #x = self.embedding(x) # embeddings for output of softmax
         _,x = self.gru(x) # we just want the last hidden state
         x = self.classify(x)
         #x = torch.sigmoid(x) # want [0,1] apparently we dont want sigmoid, because for LSGAN, it encourages our samples to be close to the decision boundary
@@ -58,7 +59,8 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         #if its just a dense layer, and then al things are 0, so its just not giving new values
         #so try embedding! 
-
+        #self.embedding.weight.requires_grad = False
+        #self.embedding.weight.requires_grad_(False)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
@@ -66,7 +68,7 @@ class Encoder(nn.Module):
         #x = torch.tensor(x, dtype=torch.long)
         #x = self.embedding(x) # embeddings for output of softmax
         x = x @ self.embedding.weight
-        #print(x.shape)
+        print(x.shape)
         #x = torch.squeeze(x, dim=1)
         _,hidden = self.gru(x)
         return hidden
@@ -125,23 +127,23 @@ class Generator(nn.Module):
 
         start_token = torch.nn.functional.one_hot(decoder_input, num_classes=vocab_size).float().reshape((batch_size, 1, vocab_size))
         outputs = torch.cat([outputs, start_token], dim=1)
-        #print("outputs")
-        #print(outputs)
+        print("outputs")
+        print(outputs)
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
-            #if t % 9000000 == 0:
-                #print("decoder output")
-                #print(decoder_output)
+            if t % 200 == 0:
+                print("decoder output")
+                print(decoder_output)
             outputs = torch.cat([outputs, decoder_output], dim=1)
-            #if t % 900000 == 0:
-            #    print("outputs after concat")
-            #    print(decoder_output)
+            if t % 200 == 0:
+                print("outputs after concat")
+                print(decoder_output)
             argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
-            #argMax = torch.squeeze(argMax, dim=-1)
-            if t % 100 == 0:
-                print("argmax yay")
-            #    print(argMax)
+            argMax = torch.squeeze(argMax, dim=-1)
+            if t % 200 == 0:
+                print("argmax")
+                print(argMax)
             
 
             # top_n_probs, top_n_indices = torch.sort(outputs, descending=True, dim=1)
@@ -217,26 +219,25 @@ class CycleGAN(nn.Module):
 
                 DA_fake = self.D_A(fake_A)
                 DB_fake = self.D_B(fake_B)
-                #print("cycle A")
-                #print(cycle_A.shape)
+                print("cycle A")
+                print(cycle_A.shape)
                 # Cycle loss
                 cycle_A = torch.permute(cycle_A, (0, 2, 1))
                 cycle_B = torch.permute(cycle_B, (0, 2, 1))
 
                 c_loss = self.lamb * cycle_loss(real_A_int, cycle_A, real_B_int, cycle_B, self.padding_idx)
-
+                print(229)
                 # Generator losses
-                #reconstruction_loss = F.cross_entropy(probs, x.argmax(dim=1))
                 g_A2B_loss = self.l2loss(DB_fake, torch.ones_like(DB_fake)) + c_loss
                 g_B2A_loss = self.l2loss(DA_fake, torch.ones_like(DA_fake)) + c_loss
-
+                print(233)
                 # Discriminator losses
                 DA_real = self.D_A(real_A)
                 DB_real = self.D_B(real_B)
-
+                print(237)
                 fake_A = fake_A.clone().detach()
                 fake_B = fake_B.clone().detach()
-
+                print("240")
                 d_A_loss_real = self.l2loss(DA_real, torch.ones_like(DA_real))
                 d_A_loss_fake = self.l2loss(DA_fake, torch.zeros_like(DA_fake))
                 d_A_loss = (d_A_loss_real + d_A_loss_fake) / 2

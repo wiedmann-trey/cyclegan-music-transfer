@@ -1,6 +1,7 @@
 from models import CycleGAN
 import torch
 from datasets import get_data
+import copy 
 
 def pretrain(epochs=12, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,13 +78,17 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
             cycle_loss, g_A2B_loss, g_B2A_loss, d_A_loss, d_B_loss = model(real_a, real_b)
             
             g_A2B_loss.backward(retain_graph=True)
-            g_B2A_loss.backward()
+            g_B2A_loss.backward(retain_graph=True) #changed to true
 
             opt_G_A2B.step()
             opt_G_B2A.step()
-
-            d_A_loss.backward(retain_graph=True)
-            d_B_loss.backward()
+            print("84 train")
+            with torch.autograd.set_detect_anomaly(True):
+                d_A_loss = copy.copy(d_A_loss)
+                d_A_loss.backward(retain_graph=True)
+                print("86 train")
+                d_B_loss = copy.copy(d_B_loss)
+                d_B_loss.backward()
 
             opt_D_A.step()
             opt_D_B.step()
