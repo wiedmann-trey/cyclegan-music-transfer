@@ -103,7 +103,7 @@ class Generator(nn.Module):
         self.decoder = Decoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.pretrain = pretrain
-    def forward(self, input, temp=1):
+    def forward(self, input, temp=1, teach_force_ratio=.9):
         #input is [batch_size, sentence_len, vocab_size]
         #print(input.shape)
         max_len = input.shape[1]
@@ -157,7 +157,7 @@ class Generator(nn.Module):
             decoder_input = samples #out_index #argMax
             max_output[:, t] = samples
 
-            if self.pretrain and np.random.uniform() > 0.5:
+            if self.pretrain and np.random.uniform() < teach_force_ratio:
                 decoder_input = input_toks[:,t]
                 
             #max_output[:,t] = torch.squeeze(out_index, dim=-1)
