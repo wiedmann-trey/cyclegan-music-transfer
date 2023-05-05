@@ -157,7 +157,7 @@ class Generator(nn.Module):
             decoder_input = samples #out_index #argMax
             max_output[:, t] = samples
 
-            if self.pretrain:
+            if self.pretrain and np.random.uniform() > 0.5:
                 decoder_input = input_toks[:,t]
                 
             #max_output[:,t] = torch.squeeze(out_index, dim=-1)

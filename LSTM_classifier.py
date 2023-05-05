@@ -23,7 +23,9 @@ class LSTMClassifier(nn.Module):
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
-        self.hidden = 0 #self.init_hidden(batch_size=32)
+        self.hidden = self.init_hidden(batch_size=64)
+        #self.hidden = [autograd.Variable(torch.zeros(1, 32, self.hidden_dim)), 
+        #        autograd.Variable(torch.zeros(1, 32, self.hidden_dim))]
 
     def init_hidden(self, batch_size):
         # the first is the hidden h
@@ -44,22 +46,23 @@ class LSTMClassifier(nn.Module):
         # return log_probs
         batch_size = sentence.size(0)
         embeds = self.word_embeddings(sentence)
+        
         #print(embeds.shape)
-        hidden = copy.copy(self.init_hidden(32))
+        #hidden = (self.hidden)
         #print("here 49")
-        lstm_out, self.hidden = self.lstm(embeds, hidden)
+        lstm_out, self.hidden = self.lstm(embeds, self.hidden)
         #print("51")
         y = self.hidden2label(lstm_out[:, -1, :])
         log_probs = F.log_softmax(y, dim=1)
+        
         #print(log_probs.shape)
         return log_probs
-
 
 def get_accuracy(truth, pred):
      assert len(truth)==len(pred)
      right = 0
      for i in range(len(truth)):
-         if truth[i]==pred[i]:
+         if torch.argmax(truth[i])==torch.argmax(pred[i]):
              right += 1.0
      return right/len(truth)
 
@@ -73,23 +76,35 @@ def train(model):
     loss_function = nn.NLLLoss()
     optimizer = optim.Adam(model.parameters(),lr = 1e-3)
 
-    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=64)
     #loss_func = nn.CrossEntropyLoss()
     #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
     for epoch in range(num_epochs):
         running_loss = 0.0
+        running_acc=0.0
+        b=0
         for i, data in enumerate(pop_jazz_train_loader):
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
         
             with torch.autograd.set_detect_anomaly(True):
+                model.hidden = model.init_hidden(batch_size=64)
+                model.zero_grad()
                 outputs = model(timeshift)
                 #timeshift_label = torch.squeeze(timeshift_label)
                 loss = nn.functional.cross_entropy(outputs, timeshift_label)
+                #loss = loss_function(outputs, timeshift_label)
+                #loss.backward(retain_graph=True)
                 loss.backward(retain_graph=True)
+                acc = get_accuracy(timeshift_label, outputs)
+                #print(acc)
+                running_acc+=acc
+                b+=1
+            print(running_acc / b)
             
             optimizer.step()
+
             running_loss += loss.item()
 
             # print statistics
@@ -125,9 +140,9 @@ def test(model):
 
 
 if __name__ == '__main__':
-    EMBEDDING_DIM = 50
-    HIDDEN_DIM = 50
-    EPOCH = 100
+    EMBEDDING_DIM = 256
+    HIDDEN_DIM = 256
+    EPOCH = 10
     classifier = LSTMClassifier(embedding_dim=EMBEDDING_DIM,hidden_dim=HIDDEN_DIM,
                            vocab_size=391,label_size=2)
     train(classifier)

@@ -104,8 +104,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     model = CycleGAN(vocab_size=vocab_size, padding_idx=vocab_size-1, mode='A2B')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = model.to(device)
-    #model.mode = 'pretrain'
+    
     model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))#, map_location=torch.device('cpu')))
+    model.mode = 'pretrain'
     input_song = split_midi(input_song_path, 60, 'testing')[0]
     print(input_song)
     print(len(input_song))
@@ -158,7 +159,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=348, use_single_note_off_event=False)
+    output_song = muspy.from_event_representation(output_song, resolution=284, use_single_note_off_event=False)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)

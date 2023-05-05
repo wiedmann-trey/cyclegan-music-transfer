@@ -22,7 +22,7 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
         total_acc_a = 0
         total_acc_b = 0
         num_batch = 0
-        i = 1
+        b = 1
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
             if i % 40 == 0:
@@ -48,6 +48,7 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
         if save:
             path = "pretrain_model" + str(b) + ".pth"
             torch.save(model.state_dict(), path)
+            b+=1
 
 def train(epochs=10, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -104,4 +105,4 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
         torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
-    train()
+    pretrain()
