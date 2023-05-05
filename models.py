@@ -4,7 +4,7 @@ from torch.nn import functional as F
 import numpy as np
 
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
-    return F.nll_loss(torch.log(cycle_a), real_a, ignore_index=padding_index, reduction='mean') + F.nll_loss(torch.log(cycle_b), real_b, ignore_index=padding_index, reduction='mean')
+    return F.nll_loss(torch.log(cycle_a), real_a, reduction='mean') + F.nll_loss(torch.log(cycle_b), real_b, reduction='mean')
 
 def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
     acc_a = torch.sum(torch.logical_and(real_a != padding_index,  real_a==cycle_a).float())/torch.sum((real_a != padding_index).float())
