@@ -3,13 +3,13 @@ import torch
 from datasets import get_data
 import copy 
 
-def pretrain(epochs=35, vocab_size=391, save=True, load=False):
+def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model = model.to(device)
-        model.load_state_dict(torch.load("final_pretrain_model1.pth", map_location=device))
+        model.load_state_dict(torch.load("pretrain_pop_jazz.pth", map_location=device))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
@@ -42,20 +42,20 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=False):
             total_acc_b += float(acc_b)
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
-    if save:
-        x = str(b)
-        path = "_pretrain_pop_jazz"
-        final_path = x + path + ".pth"
+        if save:
+            x = str(b)
+            path = "_pretrain_pop_jazz"
+            final_path = x + path + ".pth"
         
-        print("saving to " + final_path)
-        torch.save(model.state_dict(), final_path)
+            print("saving to " + final_path)
+            torch.save(model.state_dict(), final_path)
 
-def train(epochs=10, vocab_size=391, save=True, load=True):
+def train(epochs=20, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
     if load:
-        model.load_state_dict(torch.load("pretrain_model_15.pth", map_location=torch.device(device)))
+        model.load_state_dict(torch.load("pretrain_pop_jazz.pth", map_location=torch.device(device)))
     model = model.to(device)
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
