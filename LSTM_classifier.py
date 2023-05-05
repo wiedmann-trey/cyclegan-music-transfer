@@ -23,7 +23,7 @@ class LSTMClassifier(nn.Module):
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
-        self.hidden = self.init_hidden(batch_size=64)
+        self.hidden = self.init_hidden(batch_size=32)
         #self.hidden = [autograd.Variable(torch.zeros(1, 32, self.hidden_dim)), 
         #        autograd.Variable(torch.zeros(1, 32, self.hidden_dim))]
 
@@ -53,8 +53,9 @@ class LSTMClassifier(nn.Module):
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
         #print("51")
         y = self.hidden2label(lstm_out[:, -1, :])
-        log_probs = F.log_softmax(y, dim=1)
-        
+        #log_probs = F.log_softmax(y, dim=1)
+        log_probs = F.softmax(y, dim=1)
+        #print(log_probs)
         #print(log_probs.shape)
         return log_probs
 
@@ -69,14 +70,20 @@ def get_accuracy(truth, pred):
 # train and test from pytorch documentation: 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
-def train(model):
+def train(model, load=True, model_path='classifier_epoch6_model.pth'):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
+    model = LSTMClassifier(embedding_dim=256, hidden_dim=256, vocab_size=391, label_size=2)
+    if load:
+        model = model.to(device)
+        model.load_state_dict(torch.load(model_path, map_location=device))
+    model = model.to(device)
     best_dev_acc = 0.0
     
     loss_function = nn.NLLLoss()
     optimizer = optim.Adam(model.parameters(),lr = 1e-3)
 
-    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=64)
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
     #loss_func = nn.CrossEntropyLoss()
     #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -89,14 +96,15 @@ def train(model):
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
         
             with torch.autograd.set_detect_anomaly(True):
-                model.hidden = model.init_hidden(batch_size=64)
+                model.hidden = model.init_hidden(batch_size=32)
                 model.zero_grad()
                 outputs = model(timeshift)
                 #timeshift_label = torch.squeeze(timeshift_label)
+                
                 loss = nn.functional.cross_entropy(outputs, timeshift_label)
                 #loss = loss_function(outputs, timeshift_label)
                 #loss.backward(retain_graph=True)
-                loss.backward(retain_graph=True)
+                loss.backward()
                 acc = get_accuracy(timeshift_label, outputs)
                 #print(acc)
                 running_acc+=acc

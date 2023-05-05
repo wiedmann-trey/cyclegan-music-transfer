@@ -71,22 +71,25 @@ def get_data():
 def get_classifier_data(batch_size):
     pop_samples = numpy_to_torch("pop_events")
     jazz_samples = numpy_to_torch("jazz_events")
+    num_samples = min(len(pop_samples), len(jazz_samples))
+    mod = num_samples // batch_size
+    #jazz_mod = len(jazz_samples) // batch_size
+    #pop_mod = len(pop_samples) // batch_size
 
-    jazz_mod = len(jazz_samples) // batch_size
-    pop_mod = len(pop_samples) // batch_size
-
-    pop_samples = pop_samples[:pop_mod*batch_size]
-    jazz_samples = jazz_samples[:jazz_mod*batch_size]
+    pop_samples = pop_samples[:mod*batch_size]
+    jazz_samples = jazz_samples[:mod*batch_size]
     
     pop_labels = [torch.nn.functional.one_hot(torch.tensor(1), num_classes=(2)).float() for i in pop_samples]
     jazz_labels = [torch.nn.functional.one_hot(torch.tensor(0), num_classes=(2)).float() for i in jazz_samples]
 
     all_samples = torch.cat((pop_samples, jazz_samples))
+    
     pop_labels.extend(jazz_labels)
     all_labels=pop_labels
+    print(len(all_samples))
     
     pop_jazz_set = ClassifierDataset(all_genres = all_samples, all_labels = all_labels)
-    pop_jazz_train, pop_jazz_test = data.random_split(pop_jazz_set, [int(round(len(all_labels)*0.8)), int(round(len(all_labels)*0.2))])
+    pop_jazz_train, pop_jazz_test = data.random_split(pop_jazz_set, [int(round(len(all_labels)*0.5)), int(round(len(all_labels)*0.5))])
     
     pop_jazz_train_loader = DataLoader(dataset=pop_jazz_train, batch_size=32, shuffle=True)
     pop_jazz_test_loader = DataLoader(dataset=pop_jazz_test, batch_size=32, shuffle=False)
