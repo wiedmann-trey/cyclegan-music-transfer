@@ -11,7 +11,6 @@ from torch.utils.data import Dataset, DataLoader
 import torch.utils.data as data
 import pickle
 
-
 def numpy_to_torch(folder_path):
     """
     Loads numpy arrays in a folder and returns them as a list of numpy arrays.
@@ -31,17 +30,11 @@ def numpy_to_torch(folder_path):
             start_token = np.array([388])
             end_token = np.array([389])
             timeshift = np.ndarray.flatten(timeshift)
+            if len(timeshift) > 400:
+                timeshift = timeshift[:400]
             timeshift = np.concatenate([start_token, timeshift, end_token])
-            if len(timeshift) < 550:
-                # append the array to the list
-                timeshifts.append(timeshift)
-            else:
-                continue
-            #print(timeshift)
+            timeshifts.append(timeshift)
     timeshifts = [torch.tensor(seq, requires_grad=False) for seq in timeshifts]
-    timeshifts = pad_sequence(timeshifts, padding_value=390)
-    print("loaded!")
+    timeshifts = pad_sequence(timeshifts, padding_value=390, batch_first=True)
+    print("loaded!") 
     return timeshifts
-
-
-#numpy_to_torch("/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events")

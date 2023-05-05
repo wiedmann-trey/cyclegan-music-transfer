@@ -1,28 +1,75 @@
 from models import CycleGAN
 import torch
 from datasets import get_data
+import copy 
 
-def train(epochs=1, vocab_size=391, save=True):
+def pretrain(epochs=12, vocab_size=391, save=True, load=False):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    pop_rock_train_loader, pop_rock_test_loader = get_data()
+    model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
+    if load:
+        model = model.to(device)
+        model.load_state_dict(torch.load("model.pth", map_location=device))
+    model = model.to(device)
+    
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
+    b = 1
+    for epoch in range(epochs):
+        model.train()
+        print(f"pretrain epoch:{epoch}")
+        total_loss = 0
+        total_acc_a = 0
+        total_acc_b = 0
+        num_batch = 0
+        i = 1
+        for i, data in enumerate(pop_rock_train_loader):
+            real_a, real_b = data['bar_a'], data['bar_b']
+            if i % 40 == 0:
+                
+                print(i)
+                i*=40
+            real_a, real_b = real_a.to(device), real_b.to(device)
+            opt_G_A2B.zero_grad()
+            opt_G_B2A.zero_grad()
+
+            cycle_loss, acc_a, acc_b = model.pretrain(real_a, real_b)
+            
+            cycle_loss.backward()
+
+            opt_G_A2B.step()
+            opt_G_B2A.step()
+
+            total_loss += float(cycle_loss)
+            total_acc_a += float(acc_a)
+            total_acc_b += float(acc_b)
+            num_batch += 1
+        print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
+        if save:
+            path = "pretrain_model" + str(b) + ".pth"
+            torch.save(model.state_dict(), path)
+
+def train(epochs=10, vocab_size=391, save=True, load=True):
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
-
+    if load:
+        model.load_state_dict(torch.load("pretrain_model_15.pth", map_location=torch.device(device)))
+    model = model.to(device)
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
     opt_D_A = torch.optim.Adam(model.D_A.parameters())
     opt_D_B = torch.optim.Adam(model.D_B.parameters())
-
+    b=1
     for epoch in range(epochs):
         model.train()
-        #for i, batch in batches: # TODO FIGURE OUR DATA LOADING / BATCHING
+        print(f"epoch:{epoch}")
+        total_loss = 0
+        num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
-            print(f"batch: {i}")
             real_a, real_b = data['bar_a'], data['bar_b']
-            
-            real_a = torch.nn.functional.one_hot(real_a, num_classes=(vocab_size)).float()
-            print(real_a)
-            real_b = torch.nn.functional.one_hot(real_b, num_classes=(vocab_size)).float()
-            print(real_b)
-            print(real_a.shape)
+            # we may want to feed in as not one_hots and convert to one hots in the model
+            real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()
             opt_D_A.zero_grad()
@@ -30,21 +77,31 @@ def train(epochs=1, vocab_size=391, save=True):
 
             cycle_loss, g_A2B_loss, g_B2A_loss, d_A_loss, d_B_loss = model(real_a, real_b)
             
-            '''g_A2B_loss.backward(retain_graph=True)
-            g_B2A_loss.backward(retain_graph=True)
-
-            d_A_loss.backward(retain_graph=True)
-            d_B_loss.backward(retain_graph=True)
+            g_A2B_loss.backward(retain_graph=True)
+            g_B2A_loss.backward(retain_graph=True) #changed to true
 
             opt_G_A2B.step()
             opt_G_B2A.step()
+            print("84 train")
+            with torch.autograd.set_detect_anomaly(True):
+                d_A_loss = copy.copy(d_A_loss)
+                d_A_loss.backward(retain_graph=True)
+                print("86 train")
+                d_B_loss = copy.copy(d_B_loss)
+                d_B_loss.backward()
+
             opt_D_A.step()
-            opt_D_B.step()'''
-            print(f"loss: {g_A2B_loss}")
-        print(f"epoch:{epoch}")
+            opt_D_B.step()
+            total_loss += float(g_A2B_loss)
+            num_batch += 1
+        print(f"loss:{total_loss/num_batch}")
+        if save:
+            path = "pretrain_model" + str(b) + ".pth"
+            torch.save(model.state_dict(), path)
+            b+=1
 
     if save:
-        torch.save(model.state_dict(), 'model.pth')
+        torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
     train()

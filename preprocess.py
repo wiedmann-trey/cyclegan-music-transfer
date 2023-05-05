@@ -60,15 +60,15 @@ def split_midi(midi_path, time_interval, header):
     total_seconds = original_mido.length #length of midos are given in seconds 
     ticks_per_beat = original_mido.ticks_per_beat 
     total_ticks = 0
-    genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/classical_events/"
+    genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_CLASSICAL/"
     try: 
         just_song_key = song_genre_dict[header]
         song_genre = genre_dictionary[just_song_key]
         song_genre = genre_number_dict[song_genre]
         if song_genre == 0: 
-            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/jazz_events/"
+            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_JAZZ/"
         if song_genre == 1: 
-            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/pop_events/"
+            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_POP/"
     except Exception as e:
         song_genre = genre_number_dict["classical"]
 
@@ -118,7 +118,8 @@ def split_midi(midi_path, time_interval, header):
         for i in split_mus.tracks:
             if not i.is_drum:
                 new_mus.tracks.append(i)
-        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False)
+        new_mus = new_mus.adjust_resolution(48)
+        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, use_single_note_off_event=True)
         file_name = f"{new_path}_{subinterval}.npy" # create a unique filename based on header and subinterval
         final_path = os.path.join(genre_path, file_name)
         array_mus = split_mus
@@ -181,9 +182,6 @@ def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:in
                                 print(e)  
                                 continue          
                             
-    #timeshifts = [torch.tensor(seq) for seq in timeshifts]
-    #timeshifts = pad_sequence(timeshifts, padding_value=0)
-    #print(timeshifts.shape)
 
     return timeshifts, labels
                
@@ -197,13 +195,7 @@ def get_test_train_samples(all_timeshifts, all_labels, first_class, second_class
             first_genre_ts.append(all_timeshifts[i])
         if all_labels[i] == second_class:
             second_genre_ts.append(all_timeshifts[i])
-    #first_genre_ts = np.ndarray(first_genre_ts)
-    #second_genre_ts = np.ndarray(second_genre_ts)
-    #genre_labels = np.array(genre_labels)
-    #genre_labels = torch.from_numpy(genre_labels)
-    #genre_labels = torch.nn.functional.one_hot(genre_labels, num_classes)
-    #first_genre_ts = np.random.shuffle(first_genre_ts)
-    #second_genre_ts = np.random.shuffle(second_genre_ts)
+
     return first_genre_ts, second_genre_ts
 
 
@@ -215,7 +207,7 @@ genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song lab
 print(len(song_paths))
 
 def get_data():
-    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 5, lakh_first=False)
+    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 8, lakh_first=True)
     #pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
 
 get_data()
