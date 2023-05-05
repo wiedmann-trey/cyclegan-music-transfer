@@ -3,21 +3,6 @@ import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
 
-#if we are pretraining, we can teacher force with the input tokens since they are the desired output
-#GRU still needs a context window, 
-#for softmax, sometimes it's helpful not to do argmax directly, but to sample
-#eventually you'll be at a state where it converges but that's not necessarily accurate, 
-#like taking the weighted sum of softmax, gives you a bit more noise. 
-#np.random.choice - takes a distribution and samples one index out of it
-#to go from weighted sum to argmax -- we can use np.random choice, this will take an array of numbers and
-# take their associated probabilities, and sample based on that distribution. 
-#you're weighing the probability distribution based off the softmax distirbution
-#np.random.choice([a, b, c], [0.1, 0.7, 0.2]) it's not weighing, it's choosing. 
-#np.random.choice([0....397 (like arange)], softmax)
-#hopefully we don't have to do any window size stuff, but revisit rnn.py and generate sentences, 
-#generate sentences function from previous homework will help with sampling from distribution, 
-#hopefullywe just sample from top 5 probabilities of softmax, normalize, and then sample and use argmax
-
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
     return F.nll_loss(torch.log(cycle_a), real_a, ignore_index=padding_index, reduction='mean') + F.nll_loss(torch.log(cycle_b), real_b, ignore_index=padding_index, reduction='mean')
 

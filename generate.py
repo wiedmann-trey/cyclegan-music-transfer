@@ -107,7 +107,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     
     model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))#, map_location=torch.device('cpu')))
     input_song = split_midi(input_song_path, 60, 'testing')[0]
-    #print(input_song)
+    print(input_song)
+    print(max(np.ndarray.flatten(input_song)))
     #print(len(input_song))
     #print(np.reshape(np.squeeze(input_song), (-1, 2)))
     input_song = numpy_to_torch(input_song)
