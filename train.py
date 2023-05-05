@@ -44,6 +44,7 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
             path = "pretrain_model" + str(b) + ".pth"
+            print("saving to " + path)
             torch.save(model.state_dict(), path)
             b+=1
 
