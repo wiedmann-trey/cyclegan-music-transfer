@@ -84,8 +84,7 @@ class Decoder(nn.Module):
         self.pred = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
             nn.LeakyReLU(negative_slope=.1),
-            nn.Linear(hidden_dim, vocab_size),
-            nn.Softmax(dim=-1)
+            nn.Linear(hidden_dim, vocab_size)
         )
 
     def forward(self, input, hidden):
@@ -104,7 +103,7 @@ class Generator(nn.Module):
         self.decoder = Decoder(vocab_size, padding_idx, embedding_dim=embedding_dim, hidden_dim=hidden_dim)
         self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.pretrain = pretrain
-    def forward(self, input):
+    def forward(self, input, temp=1):
         #input is [batch_size, sentence_len, vocab_size]
         #print(input.shape)
         max_len = input.shape[1]
@@ -132,20 +131,15 @@ class Generator(nn.Module):
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
+            decoder_output = F.softmax(decoder_output/temp, dim=-1)
             if t % 200 == 0:
-                print("decoder output")
+                print("decoder output") 
                 print(decoder_output)
             outputs = torch.cat([outputs, decoder_output], dim=1)
             if t % 200 == 0:
                 print("outputs after concat")
                 print(decoder_output)
-            argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)#[batch_size]
-            argMax = torch.squeeze(argMax, dim=-1)
-            if t % 200 == 0:
-                print("argmax")
-                print(argMax)
             
-
             # top_n_probs, top_n_indices = torch.sort(outputs, descending=True, dim=1)
             # top_4_probs = top_n_probs[4]
             # top_4_indices = top_n_indices[4]
@@ -157,11 +151,14 @@ class Generator(nn.Module):
             # weights = torch.rand(4)
             # out_index = torch.argmax(top_4_probs)
             # out_index = top_4_indices[out_index]
-            max_output[:, t] = argMax
+            samples = torch.multinomial(decoder_output, 1, True)
+            samples = torch.squeeze(samples, dim=-1)
+            samples = torch.squeeze(samples, dim=-1)
+            decoder_input = samples #out_index #argMax
+            max_output[:, t] = samples
             if self.pretrain:
                 decoder_input = input_toks[:,t]
-            else:
-                decoder_input = argMax #out_index #argMax
+                
             #max_output[:,t] = torch.squeeze(out_index, dim=-1)
             if t % 200 == 0:
                 print("max output")
