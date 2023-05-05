@@ -3,7 +3,7 @@ import torch
 from datasets import get_data
 import copy 
 
-def pretrain(epochs=10, vocab_size=391, save=True, load=True):
+def pretrain(epochs=10, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
