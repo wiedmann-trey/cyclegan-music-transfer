@@ -151,12 +151,12 @@ class Generator(nn.Module):
             # weights = torch.rand(4)
             # out_index = torch.argmax(top_4_probs)
             # out_index = top_4_indices[out_index]
-            samples = torch.multinomial(decoder_output, 1, True)
-            samples = torch.squeeze(samples, dim=-1)
+            samples = torch.squeeze(decoder_output, dim=1)
+            samples = torch.multinomial(samples, 1, True)
             samples = torch.squeeze(samples, dim=-1)
             decoder_input = samples #out_index #argMax
             max_output[:, t] = samples
-            
+
             if self.pretrain:
                 decoder_input = input_toks[:,t]
                 
