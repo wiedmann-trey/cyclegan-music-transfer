@@ -3,7 +3,7 @@ import torch
 from datasets import get_data
 import copy 
 
-def pretrain(epochs=10, vocab_size=391, save=True, load=True):
+def pretrain(epochs=25, vocab_size=391, save=True, load=False):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
@@ -43,7 +43,7 @@ def pretrain(epochs=10, vocab_size=391, save=True, load=True):
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
     if save:
-        path = "final_pretrain_model2.pth"
+        path = "final_pretrain_model3.pth"
         print("saving to " + path)
         torch.save(model.state_dict(), path)
 
