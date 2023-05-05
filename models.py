@@ -191,9 +191,7 @@ class CycleGAN(nn.Module):
             real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
 
             fake_B, guesses_B = self.G_A2B(real_A)
-
             fake_A, guesses_A = self.G_B2A(real_B)
-
             acc_a, acc_b = acc(real_A_int, guesses_B, real_B_int, guesses_A, self.padding_idx)
 
             fake_A = torch.permute(fake_A, (0, 2, 1))

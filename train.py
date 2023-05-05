@@ -96,7 +96,7 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
-            path = "pretrain_model" + str(b) + ".pth"
+            path = str(b) + "train_model" + ".pth"
             torch.save(model.state_dict(), path)
             b+=1
 
