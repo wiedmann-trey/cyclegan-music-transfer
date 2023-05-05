@@ -96,6 +96,7 @@ def train(model):
             if i % 100 == 1:    # print every 2000 mini-batches
                 print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 100:.10f}')
                 running_loss = 0.0
+                running_acc = 0.0
         
         # save every epoch
         torch.save(model.state_dict(), f'classifier_epoch{epoch}_model.pth')

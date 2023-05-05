@@ -27,7 +27,7 @@ def pretrain(epochs=12, vocab_size=391, save=True, load=False):
             real_a, real_b = data['bar_a'], data['bar_b']
             if i % 40 == 0:
                 
-                print(i)
+                # print(i)
                 i*=40
             real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
@@ -82,11 +82,11 @@ def train(epochs=10, vocab_size=391, save=True, load=True):
 
             opt_G_A2B.step()
             opt_G_B2A.step()
-            print("84 train")
+            # print("84 train")
             with torch.autograd.set_detect_anomaly(True):
                 d_A_loss = copy.copy(d_A_loss)
                 d_A_loss.backward(retain_graph=True)
-                print("86 train")
+                # print("86 train")
                 d_B_loss = copy.copy(d_B_loss)
                 d_B_loss.backward()
 
