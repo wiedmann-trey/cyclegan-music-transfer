@@ -64,7 +64,7 @@ def split_midi(midi_path, time_interval, final_name):
         for i in split_mus.tracks:
             if not i.is_drum:
                 new_mus.tracks.append(i)
-        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, use_single_note_off_event=True)
+        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, use_single_note_off_event=False)
         file_name = f"{final_name}_{subinterval}.npy" # create a unique filename based on header and subinterval
         array_mus = split_mus
         #np.save(file_name, array_mus, allow_pickle=True)
@@ -159,20 +159,20 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.reshape(-1, 1)
     #print(output_song)
     np.savetxt('SAD.txt', output_song)
-    output_song = muspy.from_event_representation(output_song, resolution=284, use_single_note_off_event=False)
+    output_song = muspy.from_event_representation(output_song, resolution=200, use_single_note_off_event=False)
     
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('train_model2.pth', 
-                  'maestro-v3.0.0/2014/MIDI-UNPROCESSED_01-03_R1_2014_MID--AUDIO_02_R1_2014_wav--4.midi', 
-                  'trained_2_epochs.mid', 
-                  genre='jazz', 
-                  vocab_size=391)
-    generate_song('pretrain_model10.pth', 
-                  'maestro-v3.0.0/2014/MIDI-UNPROCESSED_01-03_R1_2014_MID--AUDIO_02_R1_2014_wav--4.midi', 
-                  'pretrained_10_epochs.mid', 
+    #generate_song('train_model2.pth', 
+    #              'maestro-v3.0.0/2014/MIDI-UNPROCESSED_01-03_R1_2014_MID--AUDIO_02_R1_2014_wav--4.midi', 
+    #              'trained_2_epochs.mid', 
+    #              genre='jazz', 
+    #              vocab_size=391)
+    generate_song('final_pretrain.pth', 
+                  'ORIGINAL.midi', 
+                  'final_pretrained_epochs.mid', 
                   genre='jazz', 
                   vocab_size=391)
 
