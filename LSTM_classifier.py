@@ -18,7 +18,7 @@ class LSTMClassifier(nn.Module):
         super(LSTMClassifier, self).__init__()
         self.hidden_dim = hidden_dim
         self.embedding_dim = embedding_dim
-        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)
+        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float, padding_idx=vocab_size-1)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
         self.hidden = self.init_hidden(batch_size=32)
@@ -104,7 +104,6 @@ def test(model):
             correct += (predicted == timeshift).sum().item()
 
     print(f'Accuracy of the network on the {total} test inputs: {100 * correct // total} %')
-
 
 if __name__ == '__main__':
     EMBEDDING_DIM = 256

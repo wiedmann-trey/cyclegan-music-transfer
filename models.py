@@ -16,7 +16,7 @@ class Discriminator(nn.Module):
 
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=128):
         super(Discriminator, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)
         self.classify = nn.Sequential(
             nn.Linear(hidden_dim, 1)  
@@ -34,7 +34,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
@@ -47,7 +47,7 @@ class Decoder(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Decoder, self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size, embedding_dim) 
+        self.embedding = nn.Embedding(vocab_size, embedding_dim, padding_idx=padding_idx) 
         self.rnn = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True) 
         self.pred = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
