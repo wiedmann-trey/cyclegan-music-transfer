@@ -155,13 +155,13 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = np.array(filtered_output)
     output_song = output_song.astype(int)
     output_song = muspy.from_event_representation(output_song, resolution=resolution, use_single_note_off_event=False)
-    
+    print("done")
     with open(output_song_path, 'wb') as file:
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('pretrain_pop_jazz.pth',
+    generate_song('final_pretrain_pop_jazz.pth',
                   'ORIGINAL.midi', 
-                  'with_velocity.midi', 
+                  'with_velocity_final.midi', 
                   genre='jazz', 
                   vocab_size=391)
