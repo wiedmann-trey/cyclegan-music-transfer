@@ -5,8 +5,6 @@ import torch.autograd as autograd
 import torch.optim as optim
 import numpy as np
 import copy
-## DISCLAIMER: I haven't run this yet but it theoretically should work
-# once we fix the todos
 from datasets import get_classifier_data
 
 # sources for classifier model inspiration:
@@ -24,8 +22,6 @@ class LSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
         self.hidden = self.init_hidden(batch_size=32)
-        #self.hidden = [autograd.Variable(torch.zeros(1, 32, self.hidden_dim)), 
-        #        autograd.Variable(torch.zeros(1, 32, self.hidden_dim))]
 
     def init_hidden(self, batch_size):
         # the first is the hidden h
@@ -34,30 +30,13 @@ class LSTMClassifier(nn.Module):
                 autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim))]
 
     def forward(self, sentence):
-        # batch_size = sentence.size(0)
-        # embeds = self.word_embeddings(sentence)
-        # x = embeds.view(batch_size, -1, self.embedding_dim)
-        # x = torch.reshape(x, (-1, 32, 50))
-        # print(x.shape)
-        # print(self.hidden)
-        # lstm_out, self.hidden = self.lstm(x, self.hidden)
-        # y  = self.hidden2label(lstm_out[-1])
-        # log_probs = F.log_softmax(y)
-        # return log_probs
-        batch_size = sentence.size(0)
-        embeds = self.word_embeddings(sentence)
         
-        #print(embeds.shape)
-        #hidden = (self.hidden)
-        #print("here 49")
+        embeds = self.word_embeddings(sentence)
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
-        #print("51")
         y = self.hidden2label(lstm_out[:, -1, :])
-        #log_probs = F.log_softmax(y, dim=1)
-        log_probs = F.softmax(y, dim=1)
-        #print(log_probs)
-        #print(log_probs.shape)
-        return log_probs
+        probs = F.softmax(y, dim=1)
+
+        return probs
 
 def get_accuracy(truth, pred):
      assert len(truth)==len(pred)
@@ -99,12 +78,11 @@ def train(model, load=False, model_path='classifier_epoch6_model.pth'):
                 acc = get_accuracy(timeshift_label, outputs)
                 running_acc+=acc
                 b+=1
-            print(running_acc / b)
             optimizer.step()
             running_loss += loss.item()
             
-            if i % 100 == 1: # print every 100 mini-batches
-                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 100:.10f}')
+            if i % 50 == 1: # print every 50 mini-batches
+                print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 50:.10f} accuracy: {running_acc / b}')
                 running_loss = 0.0
         # save every epoch
         torch.save(model.state_dict(), f'pop_jazz_classifier_{epoch}.pth')
