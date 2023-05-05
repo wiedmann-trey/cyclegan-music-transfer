@@ -42,11 +42,10 @@ def pretrain(epochs=25, vocab_size=391, save=True, load=False):
             total_acc_b += float(acc_b)
             num_batch += 1
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
-        if save:
-            path = "pretrain_model" + str(b) + ".pth"
-            print("saving to " + path)
-            torch.save(model.state_dict(), path)
-            b+=1
+    if save:
+        path = "final_pretrain_model" + str(b) + ".pth"
+        print("saving to " + path)
+        torch.save(model.state_dict(), path)
 
 def train(epochs=10, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
