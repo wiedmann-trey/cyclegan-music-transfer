@@ -77,8 +77,6 @@ def split_midi(midi_path, time_interval, final_name):
     
     return split_muspy_events
 
-
-#paths = split_midi('ORIGINAL.midi', 30, 'jeez')
 def testing_numpy(numpy_paths, file_head):
     i=0
     for numpy_path in numpy_paths: 
@@ -97,9 +95,6 @@ def test_numpy(path, file_head):
 
 test_numpy("maestro-v3.0.0/2006/MIDI-Unprocessed_02_R1_2006_01-04_ORIG_MID--AUDIO_02_R1_2006_01_Track01_wav.midi",
            "yamaha_test")
-
-
-#testing_numpy(paths, 'test')
 
 def baseline(midi_path):
     x = MidiFile(midi_path)

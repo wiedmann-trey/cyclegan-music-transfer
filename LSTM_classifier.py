@@ -70,24 +70,19 @@ def get_accuracy(truth, pred):
 # train and test from pytorch documentation: 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 
-def train(model, load=True, model_path='classifier_epoch6_model.pth'):
+def train(model, load=False, model_path='classifier_epoch6_model.pth'):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    
+
     model = LSTMClassifier(embedding_dim=256, hidden_dim=256, vocab_size=391, label_size=2)
     if load:
         model = model.to(device)
         model.load_state_dict(torch.load(model_path, map_location=device))
     model = model.to(device)
-    best_dev_acc = 0.0
     
-    loss_function = nn.NLLLoss()
-    optimizer = optim.Adam(model.parameters(),lr = 1e-3)
-
     pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
-    #loss_func = nn.CrossEntropyLoss()
-    #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
+
     for epoch in range(num_epochs):
         running_loss = 0.0
         running_acc=0.0
@@ -99,30 +94,20 @@ def train(model, load=True, model_path='classifier_epoch6_model.pth'):
                 model.hidden = model.init_hidden(batch_size=32)
                 model.zero_grad()
                 outputs = model(timeshift)
-                #timeshift_label = torch.squeeze(timeshift_label)
-                
                 loss = nn.functional.cross_entropy(outputs, timeshift_label)
-                #loss = loss_function(outputs, timeshift_label)
-                #loss.backward(retain_graph=True)
                 loss.backward()
                 acc = get_accuracy(timeshift_label, outputs)
-                #print(acc)
                 running_acc+=acc
                 b+=1
             print(running_acc / b)
-            
             optimizer.step()
-
             running_loss += loss.item()
-
-            # print statistics
-            if i % 100 == 1:    # print every 2000 mini-batches
+            
+            if i % 100 == 1: # print every 100 mini-batches
                 print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 100:.10f}')
                 running_loss = 0.0
-        
         # save every epoch
-        torch.save(model.state_dict(), f'classifier_epoch{epoch}_model.pth')
-
+        torch.save(model.state_dict(), f'pop_jazz_classifier_{epoch}.pth')
     print('Finished Training')
 
 def test(model):
@@ -133,11 +118,7 @@ def test(model):
     with torch.no_grad():
         for data in pop_jazz_test_loader:
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
-            #timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
-            
-            outputs = model(timeshift)#[1]
-            
-            # the class with the highest energy is what we choose as prediction
+            outputs = model(timeshift)
             _, predicted = torch.max(outputs.data, 1)
             total += timeshift_label.size(0)
 

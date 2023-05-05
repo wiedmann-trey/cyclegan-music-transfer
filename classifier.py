@@ -16,18 +16,14 @@ class ConvBlock(nn.Module):
         self.conv_layer = nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding)
         self.batch_norm = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU()
-        self.max_pool = nn.MaxPool2d(kernel_size=pooling_size)#, stride=stride, padding=0)
+        self.max_pool = nn.MaxPool2d(kernel_size=pooling_size)
 
     def forward(self, x):
-        
         x = self.conv_layer(x)
-        x = x[None, :]
-        
+
+        x = x[None, :]   
         x = torch.squeeze(x, dim=1)
-        
-        #x = self.conv_layer(x)
-        #x = x[None, :]
-        #x = torch.squeeze(x, dim=1)
+
         x = self.batch_norm(x)
         x = self.relu(x)
         x = self.max_pool(x)
@@ -61,6 +57,7 @@ class Classifier(nn.Module):
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
+
         x = torch.reshape(x, (-1, 2048))
         x = self.dense1(x)
         x = self.relu1(x)
@@ -69,11 +66,11 @@ class Classifier(nn.Module):
         x = self.dense2(x)
         x = self.relu2(x)
         x = self.dropout2(x)
+
         x = torch.transpose(x, dim0=0, dim1=1)
         x = self.dense3(x)
         x = self.softmax(x)
 
-        
         return x
     
 # train and test from pytorch documentation: 
@@ -81,12 +78,12 @@ class Classifier(nn.Module):
 
 def train(model):
     pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(batch_size=32)
-    #loss_func = nn.CrossEntropyLoss()
-    #loss_func = nn.functional.cross_entropy()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     num_epochs = 30
+
     for epoch in range(num_epochs):
         running_loss = 0.0
+
         for i, data in enumerate(pop_jazz_train_loader):
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
@@ -102,7 +99,7 @@ def train(model):
             running_loss += loss.item()
     
             # print statistics
-            if i % 5 == 1:    # print every 2000 mini-batches
+            if i % 100 == 1:    # print every 100 mini-batches
                 print(f'[{epoch + 1}, {i + 1:10d}] loss: {running_loss / 5:.10f}')
                 running_loss = 0.0
         
@@ -120,7 +117,7 @@ def test(model):
         for data in pop_jazz_test_loader:
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             timeshift = torch.nn.functional.one_hot(timeshift, num_classes=(391)).float()
-            outputs = model(timeshift)#[1]
+            outputs = model(timeshift)
             
             # the class with the highest energy is what we choose as prediction
             _, predicted = torch.max(outputs.data, 1)

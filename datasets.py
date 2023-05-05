@@ -28,10 +28,6 @@ class TimeShiftDataset(Dataset):
         bar_a = torch.squeeze(bar_a)
         bar_b = torch.squeeze(bar_b)
         baridx = np.array([index])
-        #label = self.labels[index]
-        #print("bar_a")
-        #print(bar_a)
-        #print(bar_a.shape)
         sample = {'baridx': baridx, 'bar_a': bar_a, 'bar_a_label': self.genre_a,
                   'bar_b': bar_b, 'bar_b_label': self.genre_b}
         return sample
@@ -73,9 +69,7 @@ def get_classifier_data(batch_size):
     jazz_samples = numpy_to_torch("UPDATED_JAZZ")
     num_samples = min(len(pop_samples), len(jazz_samples))
     mod = num_samples // batch_size
-    #jazz_mod = len(jazz_samples) // batch_size
-    #pop_mod = len(pop_samples) // batch_size
-
+    
     pop_samples = pop_samples[:mod*batch_size]
     jazz_samples = jazz_samples[:mod*batch_size]
     
@@ -95,7 +89,3 @@ def get_classifier_data(batch_size):
     pop_jazz_test_loader = DataLoader(dataset=pop_jazz_test, batch_size=32, shuffle=False)
 
     return pop_jazz_train_loader, pop_jazz_test_loader
-
-
-
-#get_data()
