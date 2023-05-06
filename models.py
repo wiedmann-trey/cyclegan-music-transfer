@@ -112,7 +112,7 @@ class Generator(nn.Module):
                     decoder_input = input_toks[:,t]
 
             except Exception as e: 
-
+                print(e)
                 continue
                 
         return outputs, max_output

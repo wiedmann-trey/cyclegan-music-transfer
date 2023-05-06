@@ -48,7 +48,7 @@ class ClassifierDataset(Dataset):
         return sample
 
 def get_data():
-    pop_samples = numpy_to_torch("UPDATED_POP")
+    pop_samples = numpy_to_torch("UPDATED_CLASSICAL")
     jazz_samples = numpy_to_torch("UPDATED_JAZZ")
 
     num_samples = min(len(pop_samples), len(jazz_samples))
