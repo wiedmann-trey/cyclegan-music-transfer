@@ -11,6 +11,7 @@ from datasets import get_classifier_data
 # https://music-classification.github.io/tutorial/part3_supervised/tutorial.html
 # https://github.com/XiplusChenyu/Musical-Genre-Classification/blob/master/scripts/models.py
 #https://github.com/yuchenlin/lstm_sentence_classifier/blob/master/LSTM_sentence_classifier.py 
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class LSTMClassifier(nn.Module):
 
@@ -18,16 +19,16 @@ class LSTMClassifier(nn.Module):
         super(LSTMClassifier, self).__init__()
         self.hidden_dim = hidden_dim
         self.embedding_dim = embedding_dim
-        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)#, padding_idx=vocab_size-1)
+        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float, device=torch.device(device))#, padding_idx=vocab_size-1)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
-        self.hidden2label = nn.Linear(hidden_dim, 3) #label size
+        self.hidden2label = nn.Linear(hidden_dim, 3, device=torch.device(device)) #label size
         self.hidden = self.init_hidden(batch_size=32)
 
     def init_hidden(self, batch_size):
         # the first is the hidden h
         # the second is the cell  c
-        return [autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim)), 
-                autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim))]
+        return [autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim, device=torch.device(device))), 
+                autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim, device=torch.device(device)))]
 
     def forward(self, sentence):
         
