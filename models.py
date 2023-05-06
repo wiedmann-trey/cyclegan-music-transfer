@@ -113,16 +113,8 @@ class Generator(nn.Module):
 
             except Exception as e: 
 
-                argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)
-                max_output[:, t] = argMax
-                decoder_input = argMax
-
-                if self.pretrain and np.random.uniform() < teach_force_ratio:
-                    decoder_input = input_toks[:,t]
-
                 continue
                 
-            
         return outputs, max_output
     
 

@@ -14,7 +14,7 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
-    b = 80
+    b = 81
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
