@@ -20,7 +20,7 @@ class LSTMClassifier(nn.Module):
         self.embedding_dim = embedding_dim
         self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)#, padding_idx=vocab_size-1)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
-        self.hidden2label = nn.Linear(hidden_dim, label_size)
+        self.hidden2label = nn.Linear(hidden_dim, 3) #label size
         self.hidden = self.init_hidden(batch_size=32)
 
     def init_hidden(self, batch_size):
@@ -110,6 +110,6 @@ if __name__ == '__main__':
     HIDDEN_DIM = 256
     EPOCH = 10
     classifier = LSTMClassifier(embedding_dim=EMBEDDING_DIM,hidden_dim=HIDDEN_DIM,
-                           vocab_size=391,label_size=2)
+                           vocab_size=391,label_size=3)
     train(classifier)
     test(classifier)
