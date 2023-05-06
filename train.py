@@ -46,7 +46,7 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=False):
             x = str(b)
             path = "_pretrain_pop_jazz"
             final_path = x + path + ".pth"
-        
+            b+=1
             print("saving to " + final_path)
             torch.save(model.state_dict(), final_path)
 

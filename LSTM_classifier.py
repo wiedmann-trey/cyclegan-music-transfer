@@ -18,7 +18,7 @@ class LSTMClassifier(nn.Module):
         super(LSTMClassifier, self).__init__()
         self.hidden_dim = hidden_dim
         self.embedding_dim = embedding_dim
-        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float, padding_idx=vocab_size-1)
+        self.word_embeddings = nn.Embedding(vocab_size, embedding_dim, dtype=torch.float)#, padding_idx=vocab_size-1)
         self.lstm = nn.LSTM(embedding_dim, hidden_dim, batch_first=True)
         self.hidden2label = nn.Linear(hidden_dim, label_size)
         self.hidden = self.init_hidden(batch_size=32)

@@ -15,6 +15,8 @@ def split_midi(midi_path, time_interval, final_name):
     split_muspy_events = []
     split_song_labels = []
     total_seconds = original_mido.length #length of midos are given in seconds 
+    if time_interval > total_seconds:
+        time_interval = total_seconds
     ticks_per_beat = original_mido.ticks_per_beat 
     total_ticks = 0
 
@@ -72,7 +74,7 @@ def split_midi(midi_path, time_interval, final_name):
         
     return split_muspy_events
 
-def numpy_to_torch(input_song, complete_song=False):
+def numpy_to_torch(input_song, complete_song=False, incomplete=True):
     """
     Takes in a numpy array and converts it to a tensor with a start and end token.
 
@@ -88,8 +90,9 @@ def numpy_to_torch(input_song, complete_song=False):
             timeshift = np.ndarray.flatten(i)
             start_token = np.array([388])
             end_token = np.array([389])
-            if len(timeshift) > 400:   
-                timeshift = timeshift[:400]
+            if incomplete: 
+                if len(timeshift) > 400:   
+                    timeshift = timeshift[:400]
             timeshift = np.concatenate([start_token, timeshift, end_token])
             timeshifts.append(timeshift)
         
@@ -101,14 +104,15 @@ def numpy_to_torch(input_song, complete_song=False):
         start_token = np.array([388])
         end_token = np.array([389])
 
-        if len(timeshift) > 400:   
+        if incomplete:
+            if len(timeshift) > 400:   
                 timeshift = timeshift[:400]
 
         timeshift = np.concatenate([start_token, timeshift, end_token])
         timeshift = torch.tensor(timeshift, requires_grad=False)
         input_song = torch.nn.functional.one_hot(timeshift.long(), num_classes=(391)).float()
 
-        input_song = torch.reshape(input_song, (1, 402, 391))
+        input_song = torch.reshape(input_song, (1, -1, 391))
 
     return input_song
 
@@ -119,9 +123,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     model = model.to(device)
 
     model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
-    input_song = split_midi(input_song_path, 60, 'testing')[0]
-    
-    input_song = numpy_to_torch(input_song, complete_song=False)
+    input_song = split_midi(input_song_path, 20, 'testing')[0]
+
+    input_song = numpy_to_torch(input_song, complete_song=False, incomplete=False)
 
     getting_resolution = MidiFile(input_song_path)
     getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='fifo')
@@ -131,11 +135,11 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     # Generate a time-shift representation of the output song
     if genre == 'jazz':
         model.G_A2B.pretrain = True
-        softmax_output, output_song = model.G_A2B(input_song, temp=1)
+        softmax_output, output_song = model.G_A2B(input_song, temp=0.7)
     
     elif genre == 'pop':
         model.G_B2A.pretrain = True
-        softmax_output, output_song = model.G_B2A(input_song, temp=1)
+        softmax_output, output_song = model.G_B2A(input_song, temp=0.7)
     else:
         raise ValueError("Invalid genre specified")
 
@@ -144,6 +148,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     output_song = output_song.detach().cpu().numpy()
     output_song = np.array(output_song)
     output_song = np.ndarray.flatten(output_song)
+
     filtered_output = []
     for tok in output_song:
         if tok == 388 or tok == 390:
@@ -151,7 +156,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         if tok == 389:
             break
         filtered_output.append(tok)
-    
+
     output_song = np.array(filtered_output)
     output_song = output_song.astype(int)
     output_song = muspy.from_event_representation(output_song, resolution=resolution, use_single_note_off_event=False)
@@ -160,8 +165,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('final_pretrain_pop_jazz.pth',
+    generate_song('pretrain not ignoring padding/35_pretrain_pop_jazz.pth',
                   'ORIGINAL.midi', 
-                  'with_velocity_final.midi', 
+                  '35_pretrain.midi', 
                   genre='jazz', 
                   vocab_size=391)
