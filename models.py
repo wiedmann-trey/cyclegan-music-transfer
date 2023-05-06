@@ -102,13 +102,26 @@ class Generator(nn.Module):
             outputs = torch.cat([outputs, decoder_output], dim=1)
             
             samples = torch.squeeze(decoder_output, dim=1)
-            samples = torch.multinomial(samples, 1, True)
-            samples = torch.squeeze(samples, dim=-1)
-            decoder_input = samples 
-            max_output[:, t] = samples
+            try: 
+                samples = torch.multinomial(samples, 1, True)
+                samples = torch.squeeze(samples, dim=-1)
+                decoder_input = samples 
+                max_output[:, t] = samples
 
-            if self.pretrain and np.random.uniform() < teach_force_ratio:
-                decoder_input = input_toks[:,t]
+                if self.pretrain and np.random.uniform() < teach_force_ratio:
+                    decoder_input = input_toks[:,t]
+
+            except Exception as e: 
+                print(samples)
+                argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)
+                max_output[:, t] = argMax
+                decoder_input = argMax
+
+                if self.pretrain and np.random.uniform() < teach_force_ratio:
+                    decoder_input = input_toks[:,t]
+
+                continue
+                
             
         return outputs, max_output
     
