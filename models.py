@@ -112,7 +112,7 @@ class Generator(nn.Module):
                     decoder_input = input_toks[:,t]
 
             except Exception as e: 
-                print(samples)
+
                 argMax = torch.squeeze(decoder_output.max(-1)[1], dim=-1)
                 max_output[:, t] = argMax
                 decoder_input = argMax
