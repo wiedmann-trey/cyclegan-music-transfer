@@ -57,31 +57,38 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         # Generate a time-shift representation of the output song
         if genre == 'jazz':
             model.G_A2B.pretrain = True
-            softmax_output, output_song = model.G_A2B(song, temp=0.9)
+            softmax_output, output_song = model.G_A2B(song, temp=.0001)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
-            final_song = np.append(final_song, output_song)
+            filtered_output = []
+            for tok in output_song:
+                if tok == 388 or tok == 390:
+                    continue
+                if tok == 389:
+                    break
+                filtered_output.append(tok)
+            final_song = np.append(final_song, np.array(filtered_output))
 
         elif genre == 'pop':
             model.G_B2A.pretrain = True
-            softmax_output, output_song = model.G_B2A(song, temp=0.9)
+            softmax_output, output_song = model.G_B2A(song, temp=.0001)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
-            final_song = np.append(final_song, output_song)
+            filtered_output = []
+            for tok in output_song:
+                if tok == 388 or tok == 390:
+                    continue
+                if tok == 389:
+                    break
+                filtered_output.append(tok)
+            final_song = np.append(final_song, np.array(filtered_output))
 
         else:
             raise ValueError("Invalid genre specified")
-    print(len(final_song))
-    final_song = np.asarray(final_song)
-    
-    filtered_output = []
-    for tok in final_song:
-        if tok != 388 and tok != 389 and tok!= 390: 
-            filtered_output.append(tok)
-    print(len(filtered_output))
-    output_song = np.array(filtered_output)
+
+    output_song = np.array(final_song)
     output_song = output_song.astype(int)
     output_song = muspy.from_event_representation(output_song, resolution=resolution)
     print("done")
@@ -90,7 +97,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
 
 if __name__=="__main__":
     generate_song('pretrain_ignore_all_padding/71_pretrain_pop_jazz.pth',
-                  'ORIGINAL.midi', 
-                  '71_FULL_lower_temp.midi', 
-                  genre='jazz', 
+                  'test1.mid', 
+                  'test.midi', 
+                  genre='pop', 
                   vocab_size=391)
