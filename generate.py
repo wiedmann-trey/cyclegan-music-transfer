@@ -28,15 +28,10 @@ def split_midi(midi_path, time_interval, final_name):
     total_beats = total_ticks / ticks_per_beat
     ticks_per_second = (total_beats / total_seconds) * ticks_per_beat
 
-    scale = np.random.random()
+    
     scaling_factor = 1
 
-    if scale < 0.1:
-        scaling_factor = 1.2
-    elif scale > 0.9:
-        scaling_factor = 0.8
-
-    for i in range(int((original_mido.length * scaling_factor) // time_interval)):
+    for i in range(int((original_mido.length) // time_interval)):
         new_split_mido = MidiFile()
         lower_range = i * time_interval
         upper_range = (i + 1) * time_interval 
@@ -125,7 +120,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
     input_song = split_midi(input_song_path, 20, 'testing')[0]
 
-    input_song = numpy_to_torch(input_song, complete_song=False, incomplete=False)
+    input_song = numpy_to_torch(input_song, complete_song=False, incomplete=True)
 
     getting_resolution = MidiFile(input_song_path)
     getting_resolution = muspy.from_mido(getting_resolution, duplicate_note_mode='fifo')
@@ -135,11 +130,11 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
     # Generate a time-shift representation of the output song
     if genre == 'jazz':
         model.G_A2B.pretrain = True
-        softmax_output, output_song = model.G_A2B(input_song, temp=0.7)
+        softmax_output, output_song = model.G_A2B(input_song, temp=1)
     
     elif genre == 'pop':
         model.G_B2A.pretrain = True
-        softmax_output, output_song = model.G_B2A(input_song, temp=0.7)
+        softmax_output, output_song = model.G_B2A(input_song, temp=1)
     else:
         raise ValueError("Invalid genre specified")
 
@@ -165,8 +160,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('pretrain not ignoring padding/35_pretrain_pop_jazz.pth',
+    generate_song('pretrain_ignore_all_padding/11_pretrain_pop_jazz.pth',
                   'ORIGINAL.midi', 
-                  '35_pretrain.midi', 
+                  '11_pretrain_no_padding.midi', 
                   genre='jazz', 
                   vocab_size=391)

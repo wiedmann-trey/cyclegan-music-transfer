@@ -22,7 +22,6 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=False):
         total_acc_a = 0
         total_acc_b = 0
         num_batch = 0
-        b = 1
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
             
