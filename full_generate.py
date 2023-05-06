@@ -57,7 +57,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         # Generate a time-shift representation of the output song
         if genre == 'jazz':
             model.G_A2B.pretrain = True
-            softmax_output, output_song = model.G_A2B(song, temp=0.7)
+            softmax_output, output_song = model.G_A2B(song, temp=0.9)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -65,7 +65,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
 
         elif genre == 'pop':
             model.G_B2A.pretrain = True
-            softmax_output, output_song = model.G_B2A(song, temp=0.7)
+            softmax_output, output_song = model.G_B2A(song, temp=0.9)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -89,8 +89,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('pretrain_ignore_all_padding/21_pretrain_pop_jazz.pth',
+    generate_song('pretrain_ignore_all_padding/52_pretrain_pop_jazz.pth',
                   'ORIGINAL.midi', 
-                  '21_FULL_lower_temp.midi', 
+                  '52_FULL_lower_temp.midi', 
                   genre='pop', 
                   vocab_size=391)
