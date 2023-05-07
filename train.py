@@ -33,11 +33,15 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
             
             cycle_loss.backward()
 
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
-            #for p in model.parameters():
-            #p.register_hook(lambda grad: torch.clamp(grad, -clip_value, clip_value))
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
+            for p in model.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
+            for p in model.G_A2B.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
+            for p in model.G_B2A.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
             opt_G_A2B.step()
             opt_G_B2A.step()
 
@@ -84,9 +88,16 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward(retain_graph=True) #changed to true
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
+            for p in model.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
+            for p in model.G_A2B.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
+            for p in model.G_B2A.parameters():
+                p.register_hook(lambda grad: torch.clamp(grad, 0, 500))
+                
             opt_G_A2B.step()
             opt_G_B2A.step()
             print("84 train")
