@@ -88,9 +88,9 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward(retain_graph=True) #changed to true
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 1.5)
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 1.5)
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.parameters(), 1.5)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 1.5)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 1.5)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.parameters(), 1.5)
             #for p in model.parameters():
             #    p.register_hook(lambda grad: torch.clamp(grad, 0, 100))
             #for p in model.G_A2B.parameters():
