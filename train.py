@@ -9,12 +9,12 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model = model.to(device)
-        model.load_state_dict(torch.load("pretrain_pop_jazz/56_pretrain_pop_jazz.pth", map_location=device))
+        model.load_state_dict(torch.load("pretrain_pop_jazz/20_pretrain_pop_jazz.pth", map_location=device))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())#, weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())#, weight_decay=1e-4)
-    b = 57
+    b = 21
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
