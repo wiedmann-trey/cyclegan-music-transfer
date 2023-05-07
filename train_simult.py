@@ -33,9 +33,9 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
             
             cycle_loss.backward()
 
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 10)
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 10)
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.parameters(), 10)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 10)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 10)
+            #torch.nn.utils.clip_grad.clip_grad_norm_(model.parameters(), 10)
             #for p in model.parameters():
             #    p.register_hook(lambda grad: torch.clamp(grad, 0, 100))
             #for p in model.G_A2B.parameters():
