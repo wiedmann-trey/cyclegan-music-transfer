@@ -9,12 +9,12 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model = model.to(device)
-        model.load_state_dict(torch.load("pretrain_pop_jazz/20_pretrain_pop_jazz.pth", map_location=device))
+        model.load_state_dict(torch.load("pretrain_pop_jazz/71_pretrain_pop_jazz.pth", map_location=device))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())#, weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())#, weight_decay=1e-4)
-    b = 21
+    b = 72
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
@@ -33,8 +33,11 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
             
             cycle_loss.backward()
 
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 500)
-            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
+            #for p in model.parameters():
+            #p.register_hook(lambda grad: torch.clamp(grad, -clip_value, clip_value))
             opt_G_A2B.step()
             opt_G_B2A.step()
 
@@ -81,7 +84,9 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward(retain_graph=True) #changed to true
-
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
             opt_G_A2B.step()
             opt_G_B2A.step()
             print("84 train")
