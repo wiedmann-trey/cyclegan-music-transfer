@@ -9,11 +9,11 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model = model.to(device)
-        model.load_state_dict(torch.load("1_pretrain_pop_jazz.pth", map_location=device))
+        model.load_state_dict(torch.load("pretrain_pop_jazz/71_pretrain_pop_jazz.pth", map_location=device))
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())#, weight_decay=1e-4)
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())#, weight_decay=1e-4)
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-3)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-3)
     b = 2
     for epoch in range(epochs):
         model.train()
@@ -63,13 +63,13 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
     if load:
-        model.load_state_dict(torch.load("pretrain_pop_jazz.pth", map_location=torch.device(device)))
+        model.load_state_dict(torch.load("pretrain_pop_jazz/71_pretrain_pop_jazz.pth", map_location=torch.device(device)))
     model = model.to(device)
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())
-    opt_D_A = torch.optim.Adam(model.D_A.parameters())
-    opt_D_B = torch.optim.Adam(model.D_B.parameters())
-    b=1
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-3)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-3)
+    opt_D_A = torch.optim.Adam(model.D_A.parameters(), weight_decay=1e-3)
+    opt_D_B = torch.optim.Adam(model.D_B.parameters(), weight_decay=1e-3)
+    b=72
     for epoch in range(epochs):
         model.train()
         print(f"epoch:{epoch}")
@@ -88,9 +88,9 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
             
             g_A2B_loss.backward(retain_graph=True)
             g_B2A_loss.backward(retain_graph=True) #changed to true
-            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 500)
-            #torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 200)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 200)
+            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 200)
             #for p in model.parameters():
             #    p.register_hook(lambda grad: torch.clamp(grad, 0, 100))
             #for p in model.G_A2B.parameters():
@@ -100,11 +100,11 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
 
             opt_G_A2B.step()
             opt_G_B2A.step()
-            print("84 train")
+            #print("84 train")
             with torch.autograd.set_detect_anomaly(True):
                 d_A_loss = copy.copy(d_A_loss)
                 d_A_loss.backward(retain_graph=True)
-                print("86 train")
+                #print("86 train")
                 d_B_loss = copy.copy(d_B_loss)
                 d_B_loss.backward()
 
@@ -122,4 +122,4 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
         torch.save(model.state_dict(), 'modelPLS.pth')
 
 if __name__=="__main__":
-    pretrain()
+    train()
