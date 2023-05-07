@@ -63,7 +63,7 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1)
     if load:
-        model.load_state_dict(torch.load("pretrain_pop_jazz/56_pretrain_pop_jazz.pth", map_location=torch.device(device)))
+        model.load_state_dict(torch.load("pretrain_pop_jazz/71_pretrain_pop_jazz.pth", map_location=torch.device(device)))
     model = model.to(device)
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
