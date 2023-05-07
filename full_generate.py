@@ -96,8 +96,8 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('pretrain_ignore_all_padding/79_pretrain_pop_jazz.pth',
-                  'moonlight-movement1.mid', 
-                  'moonlight_sonata.mid', 
-                  genre='pop', 
+    generate_song('pretrain_classical_jazz/108_pretrain_classical_jazz.pth',
+                  'ORIGINAL.midi', 
+                  'jazzy_pretrain.mid', 
+                  genre='jazz', 
                   vocab_size=391)

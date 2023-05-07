@@ -90,20 +90,29 @@ def train(model, load=False, model_path='classifier_epoch6_model.pth'):
     print('Finished Training')
 
 def test(model):
-    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data()
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+    model = LSTMClassifier(embedding_dim=256, hidden_dim=256, vocab_size=391, label_size=2)
+    model = model.to(device)
+    model.load_state_dict(torch.load('Classifiers/PJC_classifier_14.pth', map_location=device))
+    model = model.to(device)
+
+    pop_jazz_train_loader, pop_jazz_test_loader = get_classifier_data(32)
     correct = 0
     total = 0
 
     with torch.no_grad():
+        running_acc=0
+        total=0
         for data in pop_jazz_test_loader:
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             outputs = model(timeshift)
-            _, predicted = torch.max(outputs.data, 1)
-            total += timeshift_label.size(0)
+            #_, predicted = torch.max(outputs.data, 1)
+            acc = get_accuracy(timeshift_label, outputs)
+            running_acc+=acc
 
-            total += timeshift_label.size(0)
-            correct += (predicted == timeshift).sum().item()
-
+            total += 1
+            print(running_acc/total)
     print(f'Accuracy of the network on the {total} test inputs: {100 * correct // total} %')
 
 if __name__ == '__main__':
@@ -112,5 +121,5 @@ if __name__ == '__main__':
     EPOCH = 10
     classifier = LSTMClassifier(embedding_dim=EMBEDDING_DIM,hidden_dim=HIDDEN_DIM,
                            vocab_size=391,label_size=3)
-    train(classifier)
+    #train(classifier)
     test(classifier)

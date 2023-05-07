@@ -3,7 +3,7 @@ import torch
 from datasets import get_data
 import copy 
 
-def pretrain(epochs=35, vocab_size=391, save=True, load=False):
+def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data()
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
@@ -12,8 +12,8 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=False):
         model.load_state_dict(torch.load("pretrain_ignore_all_padding/79_pretrain_pop_jazz.pth", map_location=device))
     model = model.to(device)
     
-    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
-    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
+    opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters())#, weight_decay=1e-4)
+    opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters())#, weight_decay=1e-4)
     b = 81
     for epoch in range(epochs):
         model.train()
@@ -33,6 +33,8 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=False):
             
             cycle_loss.backward()
 
+            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 500)
+            torch.nn.utils.clip_grad.clip_grad_norm_(model.G_A2B.parameters(), 500)
             opt_G_A2B.step()
             opt_G_B2A.step()
 
