@@ -31,9 +31,11 @@ class LSTMClassifier(nn.Module):
                 autograd.Variable(torch.zeros(1, batch_size, self.hidden_dim, device=torch.device(device)))]
 
     def forward(self, sentence):
-        
+        print("input shape", sentence.shape)
         embeds = self.word_embeddings(sentence)
+        print('embeds shape', embeds.shape)
         lstm_out, self.hidden = self.lstm(embeds, self.hidden)
+        print('lstm out')
         y = self.hidden2label(lstm_out[:, -1, :])
         probs = F.softmax(y, dim=1)
 
@@ -69,6 +71,7 @@ def train(model, load=False, model_path='classifier_epoch6_model.pth'):
         b=0
         for i, data in enumerate(pop_jazz_train_loader):
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
+            print('*', timeshift.shape)
         
             with torch.autograd.set_detect_anomaly(True):
                 model.hidden = model.init_hidden(batch_size=32)

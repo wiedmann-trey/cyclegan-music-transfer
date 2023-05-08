@@ -1,6 +1,36 @@
 from LSTM_classifier import LSTMClassifier
 import torch 
-from full_generate import get_events
+# from full_generate import get_events
+from mido import MidiFile, MidiTrack
+import muspy
+import numpy as np
+
+def get_events_for_classifier(midi_path):
+    """given a midi file path and a time interval, divides the midi file into sub-midi-files of that time interval.
+    Returns a list of muspy music objects of that time interval"""
+    original_mido = MidiFile(midi_path, clip=True) # clip velocities to prevent a lot of the LAKH errors
+    mus_object = muspy.from_mido(original_mido)
+    mus_object = muspy.to_event_representation(mus_object, encode_velocity=True)
+    mus_object = np.ndarray.flatten(mus_object)
+    timeshifts = []
+    mus_length = len(mus_object)
+    for i in range(mus_length // 400):
+        if 400*(i+1) <= mus_length:
+            ending_interval = 400*(i+1)
+        else:
+            ending_interval = mus_length
+        split_mus = mus_object[i*400 : ending_interval]
+        if len(split_mus) < 400:
+            split_mus = np.pad(split_mus, (0, 400-len(split_mus)), 'constant', constant_values=(390, 390))
+        start_token = np.array([388])
+        end_token = np.array([389])
+        timeshift = np.concatenate([start_token, split_mus, end_token])
+        timeshift = torch.tensor(timeshift, requires_grad=False).long()
+        timeshift = torch.nn.functional.one_hot(timeshift,num_classes=(391)).long() # changed float -> long
+        # timeshift = torch.reshape(timeshift, (1, -1, 391)) # should be 2d for lstm
+        timeshifts.append(timeshift)
+
+    return timeshifts
 
 def classify_song(model_path, input_song_path, requested_genre):
 
@@ -25,7 +55,7 @@ def classify_song(model_path, input_song_path, requested_genre):
     classifier.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
     
     # pasing in input
-    input_songs = get_events(input_song_path) 
+    input_songs = get_events_for_classifier(input_song_path) 
     num_correct = 0
     total = 0
     counts = {0:0, 1:0, 2:0}
