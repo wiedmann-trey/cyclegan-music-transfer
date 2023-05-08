@@ -7,8 +7,6 @@ def classify_song(model_path, input_song_path, requested_genre):
     song = input_song_path.split('/')[2].split('_')[0]
     print(f'classifying output of {song}, requested genre: {requested_genre}')
 
-    # labels -- TODO: what is the right mapping???
-
     # in get classifier data, this is how things were one-hot encoded, so i think this i the right mapping??
     # pop_labels = [torch.nn.functional.one_hot(torch.tensor(1), num_classes=(3)).float() for i in pop_samples]
     # jazz_labels = [torch.nn.functional.one_hot(torch.tensor(0), num_classes=(3)).float() for i in jazz_samples]

@@ -36,8 +36,10 @@ def get_events(midi_path):
 
 
 
-def generate_song(model_path, input_song_path, output_song_path, genre='jazz', vocab_size=391, pretrain=False):
+def generate_song(model_path, input_song_path, output_song_path, temp, genre='jazz', vocab_size=391, pretrain=False):
 
+    song = input_song_path.split('/')[2].split('_')[0]
+    print(f'generating a {genre} song with temperature {temp} from {song}')
     model = CycleGAN(vocab_size=vocab_size, padding_idx=vocab_size-1, mode='A2B')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = model.to(device)
@@ -58,7 +60,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         if genre == 'jazz':
             if pretrain:
                 model.G_A2B.pretrain = True
-            softmax_output, output_song = model.G_A2B(song, temp=0.55)
+            softmax_output, output_song = model.G_A2B(song, temp=temp)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -74,7 +76,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         elif genre == 'pop':
             if pretrain:
                 model.G_B2A.pretrain = True
-            softmax_output, output_song = model.G_B2A(song, temp=0.55)
+            softmax_output, output_song = model.G_B2A(song, temp=temp)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -100,8 +102,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
 
 if __name__=="__main__":
     generate_song('trained_classical_jazz/88CJ_train_model.pth',
-                  'ORIGINAL.midi', 
-                  'ORIGINAL_jazz_55.mid', 
+                  'generating_songs/base_songs/ORIGINAL.midi', 
+                  'generating_songs/outputted_songs/ORIGINAL_jazz_55.mid', 
+                  temp=0.55,
                   genre='jazz', 
                   vocab_size=391, 
                   pretrain=False)
