@@ -58,7 +58,7 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         if genre == 'jazz':
             if pretrain:
                 model.G_A2B.pretrain = True
-            softmax_output, output_song = model.G_A2B(song, temp=.55)
+            softmax_output, output_song = model.G_A2B(song, temp=0.55)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -99,9 +99,10 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('trained_pop_jazz/113train_model.pth',
+    generate_song('trained_classical_jazz/88CJ_train_model.pth',
                   'ORIGINAL.midi', 
-                  'ORIGINAL_tojazz.mid', 
+                  'ORIGINAL_jazz_55.mid', 
                   genre='jazz', 
                   vocab_size=391, 
                   pretrain=False)
+    
