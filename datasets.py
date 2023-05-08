@@ -47,8 +47,13 @@ class ClassifierDataset(Dataset):
         sample = {'timeshift': timeshift, 'timeshift_label': timeshift_label}
         return sample
 
-def get_data():
-    pop_samples = numpy_to_torch("UPDATED_POP")
+def get_data(classical):
+    
+    if classical:
+        pop_samples = numpy_to_torch("UPDATED_CLASSICAL")
+    else:
+        pop_samples = numpy_to_torch("UPDATED_POP")
+
     jazz_samples = numpy_to_torch("UPDATED_JAZZ")
 
     num_samples = min(len(pop_samples), len(jazz_samples))
