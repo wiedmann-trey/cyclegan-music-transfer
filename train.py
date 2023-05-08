@@ -60,7 +60,7 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
 
 def train(epochs=20, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    pop_rock_train_loader, pop_rock_test_loader = get_data()
+    pop_rock_train_loader, pop_rock_test_loader = get_data(classical=True)
     model = CycleGAN(vocab_size, vocab_size-1)
     if load:
         model.load_state_dict(torch.load("pretrain_classical_jazz/70_pretrain_classical_jazz.pth", map_location=torch.device(device)))
@@ -114,7 +114,7 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
             num_batch += 1
         print(f"loss:{total_loss/num_batch}")
         if save:
-            path = str(b) + "train_model" + ".pth"
+            path = str(b) + "CJ_train_model" + ".pth"
             torch.save(model.state_dict(), path)
             b+=1
 
