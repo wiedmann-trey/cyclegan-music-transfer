@@ -29,6 +29,7 @@ def get_events_for_classifier(midi_path):
         timeshift = torch.nn.functional.one_hot(timeshift,num_classes=(391)).long() # changed float -> long
         # timeshift = torch.reshape(timeshift, (1, -1, 391)) # should be 2d for lstm
         timeshifts.append(timeshift)
+    timeshifts = torch.cat(timeshifts)
 
     return timeshifts
 
@@ -56,31 +57,35 @@ def classify_song(model_path, input_song_path, requested_genre):
     
     # pasing in input
     input_songs = get_events_for_classifier(input_song_path) 
+    #print(len(input_songs))
+    input_songs = input_songs[:32]
     num_correct = 0
     total = 0
     counts = {0:0, 1:0, 2:0}
-
-    for song in input_songs:
-        print('song', song)
-        classifier_output = classifier(song)
-        print(classifier_output)
-        max_i = torch.argmax(classifier_output)
-        if max_i == genre_index:
-            num_correct += 1
-        total += 1
-        counts[max_i] += 1
+    song = input_songs
+    song = torch.tensor(song, dtype=torch.long)
+    #for song in input_songs:
+    #print('song', song)
+    #print(song.shape)
+    classifier_output = classifier(song)
+    print(classifier_output)
+    max_i = torch.argmax(classifier_output)
+    if max_i == genre_index:
+        num_correct += 1
+    #total += 1
+    #counts[max_i] += 1
 
     # return the number of timeshifts that were classified correctly
     # and then most common genre predicted by the classifier
 
-    percent_correct = num_correct / total
+    #percent_correct = num_correct / total
 
-    print(counts)
+    #print(counts)
     most_common_i = max(counts, key=counts.get) 
     index_to_genre = {0: 'jazz', 1: 'pop', 2: 'classical'} 
     most_common_genre = index_to_genre[most_common_i]
-
-    return percent_correct, most_common_genre
+    print(most_common_genre)
+    return most_common_genre
     
 
 if __name__=="__main__":
