@@ -36,7 +36,7 @@ def get_events(midi_path):
 
 
 
-def generate_song(model_path, input_song_path, output_song_path, genre='jazz', vocab_size=391):
+def generate_song(model_path, input_song_path, output_song_path, genre='jazz', vocab_size=391, pretrain=False):
 
     model = CycleGAN(vocab_size=vocab_size, padding_idx=vocab_size-1, mode='A2B')
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -56,8 +56,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         i+=1
         # Generate a time-shift representation of the output song
         if genre == 'jazz':
-            model.G_A2B.pretrain = True
-            softmax_output, output_song = model.G_A2B(song, temp=.25)
+            if pretrain:
+                model.G_A2B.pretrain = True
+            softmax_output, output_song = model.G_A2B(song, temp=.55)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -71,8 +72,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
             final_song = np.append(final_song, np.array(filtered_output))
 
         elif genre == 'pop':
-            model.G_B2A.pretrain = True
-            softmax_output, output_song = model.G_B2A(song, temp=0.25)
+            if pretrain:
+                model.G_B2A.pretrain = True
+            softmax_output, output_song = model.G_B2A(song, temp=0.55)
             output_song = output_song.detach().cpu().numpy()
             output_song = np.array(output_song)
             output_song = np.ndarray.flatten(output_song)
@@ -97,8 +99,9 @@ def generate_song(model_path, input_song_path, output_song_path, genre='jazz', v
         muspy.outputs.write_midi(output_song_path, output_song)
 
 if __name__=="__main__":
-    generate_song('trained_pop_jazz/95train_model.pth',
+    generate_song('trained_pop_jazz/113train_model.pth',
                   'ORIGINAL.midi', 
-                  'pop_jazz_95.mid', 
+                  'ORIGINAL_tojazz.mid', 
                   genre='jazz', 
-                  vocab_size=391)
+                  vocab_size=391, 
+                  pretrain=False)

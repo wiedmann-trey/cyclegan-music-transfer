@@ -107,7 +107,6 @@ def test(model):
         for data in pop_jazz_test_loader:
             timeshift, timeshift_label = data['timeshift'], data['timeshift_label']
             outputs = model(timeshift)
-            #_, predicted = torch.max(outputs.data, 1)
             acc = get_accuracy(timeshift_label, outputs)
             running_acc+=acc
 
@@ -121,5 +120,5 @@ if __name__ == '__main__':
     EPOCH = 10
     classifier = LSTMClassifier(embedding_dim=EMBEDDING_DIM,hidden_dim=HIDDEN_DIM,
                            vocab_size=391,label_size=3)
-    #train(classifier)
+    train(classifier)
     test(classifier)
