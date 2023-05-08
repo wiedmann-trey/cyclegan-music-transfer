@@ -33,9 +33,9 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
             
             cycle_loss.backward()
 
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 100)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 100)
-            torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 100)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 100)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.G_A2B.parameters(), 100)
+            #torch.nn.utils.clip_grad.clip_grad_value_(model.parameters(), 100)
             #for p in model.parameters():
             #    p.register_hook(lambda grad: torch.clamp(grad, 0, 100))
             #for p in model.G_A2B.parameters():
@@ -69,7 +69,7 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
     opt_D_A = torch.optim.Adam(model.D_A.parameters(), weight_decay=1e-4)
     opt_D_B = torch.optim.Adam(model.D_B.parameters(), weight_decay=1e-4)
-    b=97
+    b=71
     for epoch in range(epochs):
         model.train()
         print(f"epoch:{epoch}")
