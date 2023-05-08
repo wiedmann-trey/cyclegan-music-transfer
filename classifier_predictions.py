@@ -55,5 +55,5 @@ def classify_song(model_path, input_song_path, requested_genre):
 
 if __name__=="__main__":
     classify_song(model_path='Classifiers/PJC_classifier_14.pth',
-                  input_song_path='generating_songs/outputted_songs/PianoMan_jazz_55.mid',
+                  input_song_path='generating_songs/outputted_songs/PianoMan_jazz_100.mid',
                   requested_genre='jazz')
