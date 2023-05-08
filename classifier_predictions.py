@@ -72,8 +72,8 @@ def classify_song(model_path, input_song_path, requested_genre):
     max_i = torch.argmax(classifier_output)
     if max_i == genre_index:
         num_correct += 1
-    #total += 1
-    #counts[max_i] += 1
+    total += 1
+    counts[max_i.item()] += 1
 
     # return the number of timeshifts that were classified correctly
     # and then most common genre predicted by the classifier
@@ -90,5 +90,5 @@ def classify_song(model_path, input_song_path, requested_genre):
 
 if __name__=="__main__":
     classify_song(model_path='Classifiers/PJC_classifier_14.pth',
-                  input_song_path='generating_songs/outputted_songs/PianoMan_jazz_100.mid',
+                  input_song_path='generating_songs/base_songs/IfIAintGotYou.mid',
                   requested_genre='jazz')
