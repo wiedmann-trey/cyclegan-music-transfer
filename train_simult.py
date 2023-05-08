@@ -14,7 +14,7 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
-    b = 37
+    b = 38
     for epoch in range(epochs):
         model.train()
         print(f"pretrain epoch:{epoch}")
@@ -52,7 +52,7 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
         print(f"loss:{total_loss/num_batch} acc_a:{total_acc_a/num_batch} acc_b:{total_acc_b/num_batch}")
         if save:
             x = str(b)
-            path = "_pretrain_pop_jazz"
+            path = "_pretrain_classical_jazz"
             final_path = x + path + ".pth"
             b+=1
             print("saving to " + final_path)
