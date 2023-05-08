@@ -9,7 +9,9 @@ def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     model = CycleGAN(vocab_size, vocab_size-1, mode='pretrain')
     if load:
         model = model.to(device)
-        model.load_state_dict(torch.load("pretrain_classical_jazz/70_pretrain_classical_jazz.pth", map_location=device))
+        # model.load_state_dict(torch.load("pretrain_classical_jazz/70_pretrain_classical_jazz.pth", map_location=device))
+        # loading the new model from trained_jazz_classical
+        model.load_state_dict(torch.load("trained_classical_jazz/88CJ_train_model.pth", map_location=device))
     model = model.to(device)
     
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
