@@ -37,11 +37,6 @@ def get_genre_path(root, genre_dict):
                     dict_song_genre[os.path.join(dirpath, dir)] = dir
                     path_songs.append(os.path.join(dirpath, dir))
                 except KeyError as e:
-                    #error_dir = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/incorrect_genre_midis/"
-                    #error_string = str(faulty_file)
-                    #error_path = error_dir + error_string
-                    #shutil.move(os.path.join(dirpath, dir), error_path)
-                    #faulty_file+=1
                     continue             
     return path_songs, dict_song_genre
 
@@ -60,15 +55,15 @@ def split_midi(midi_path, time_interval, header):
     total_seconds = original_mido.length #length of midos are given in seconds 
     ticks_per_beat = original_mido.ticks_per_beat 
     total_ticks = 0
-    genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_CLASSICAL/"
+    genre_path = "UPDATED_CLASSICAL/"
     try: 
         just_song_key = song_genre_dict[header]
         song_genre = genre_dictionary[just_song_key]
         song_genre = genre_number_dict[song_genre]
         if song_genre == 0: 
-            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_JAZZ/"
+            genre_path = "UPDATED_JAZZ/"
         if song_genre == 1: 
-            genre_path = "/Users/carolinezhang/Downloads/cyclegan-music-transfer/UPDATED_POP/"
+            genre_path = "UPDATED_POP/"
     except Exception as e:
         song_genre = genre_number_dict["classical"]
 
@@ -119,10 +114,11 @@ def split_midi(midi_path, time_interval, header):
             if not i.is_drum:
                 new_mus.tracks.append(i)
         new_mus = new_mus.adjust_resolution(48)
-        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, use_single_note_off_event=True)
+        split_mus = muspy.to_event_representation(new_mus, use_end_of_sequence_event=False, encode_velocity=True)
         file_name = f"{new_path}_{subinterval}.npy" # create a unique filename based on header and subinterval
         final_path = os.path.join(genre_path, file_name)
         array_mus = split_mus
+        print(len(array_mus))
         np.save(final_path, array_mus, allow_pickle=True)
         split_muspy_events.append(split_mus)
         split_song_labels.append(song_genre)
@@ -130,8 +126,6 @@ def split_midi(midi_path, time_interval, header):
         
     return split_muspy_events, split_song_labels
 
-#like the main thing is that it would be better if the lakh_paths that we're inputting only correspond to the training genre(s) so that the preprocessing
-#takes a lot longer
 def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:int, lakh_first=False):
     '''converts midis in lakh dataset to muspy event representation'''
     timeshifts = []
@@ -158,17 +152,10 @@ def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:in
                                 continue
                             num_left-=1
                             print(num_left)
-    #yam_songs = 0
     for dirpath, dirs, midifiles in os.walk(yamaha_path):
-            #for dir in dirs:
-                #if len(dir)==4:
                     for midifile in midifiles:
                         if midifile.endswith(".midi") or midifile.endswith(".mid"):
-                        #print(midifile)
-                        #if midifile[0]!=".":
-                            absolute_song_path = os.path.join(dirpath, midifile)
-                            #absolute_song_path = os.path.join(yamaha_path, rel_path)
-                            print(midifile)
+                            absolute_song_path = os.path.join(dirpath, midifile)               
                             try: 
                                 yamaha_timeshifts, yamaha_labels = split_midi(absolute_song_path, time_interval, midifile[:-5])
                                 timeshifts.extend(yamaha_timeshifts)
@@ -176,13 +163,10 @@ def get_event_representations(lakh_paths:list, yamaha_path:str, time_interval:in
                                 print("yamaha not corrupted!")
                                 print(len(labels))
                                 print(len(timeshifts))
-                                #yam_songs += 1
                             except Exception as e:
                                 print(repr(absolute_song_path))  
                                 print(e)  
                                 continue          
-                            
-
     return timeshifts, labels
                
 def get_test_train_samples(all_timeshifts, all_labels, first_class, second_class, num_classes):
@@ -207,7 +191,7 @@ genre_number_dict = {"jazz": 0, "pop": 1, "classical": 2} #dict mapping song lab
 print(len(song_paths))
 
 def get_data():
-    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 8, lakh_first=True)
+    total_timeshifts, total_labels = get_event_representations(song_paths, "maestro-v3.0.0", 8, lakh_first=False)
     #pop_samples, classical_samples = get_test_train_samples(total_timeshifts, total_labels, 1, 2, 3)
 
 get_data()
