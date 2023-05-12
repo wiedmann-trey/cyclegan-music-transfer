@@ -3,6 +3,7 @@ import torch
 from datasets import get_data
 import copy 
 
+# pretrain generators as autoencoders, as this helps generators understand musical structure
 def pretrain(epochs=35, vocab_size=391, save=True, load=True):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     pop_rock_train_loader, pop_rock_test_loader = get_data(classical=True)
@@ -62,6 +63,8 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
     if load:
         model.load_state_dict(torch.load("pretrain_classical_jazz/70_pretrain_classical_jazz.pth", map_location=torch.device(device)))
     model = model.to(device)
+
+    # We use Adam with lr=0.001, weight decay
     opt_G_A2B = torch.optim.Adam(model.G_A2B.parameters(), weight_decay=1e-4)
     opt_G_B2A = torch.optim.Adam(model.G_B2A.parameters(), weight_decay=1e-4)
     opt_D_A = torch.optim.Adam(model.D_A.parameters(), weight_decay=1e-4)
@@ -74,7 +77,7 @@ def train(epochs=20, vocab_size=391, save=True, load=True):
         num_batch = 0
         for i, data in enumerate(pop_rock_train_loader):
             real_a, real_b = data['bar_a'], data['bar_b']
-            # we may want to feed in as not one_hots and convert to one hots in the model
+            
             real_a, real_b = real_a.to(device), real_b.to(device)
             opt_G_A2B.zero_grad()
             opt_G_B2A.zero_grad()

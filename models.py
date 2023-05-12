@@ -3,20 +3,22 @@ import torch.nn as nn
 from torch.nn import functional as F
 import numpy as np
 
+# cycle loss, using softmax
 def cycle_loss(real_a, cycle_a, real_b, cycle_b, padding_index):
     return F.nll_loss(torch.log(cycle_a), real_a, reduction='mean') + F.nll_loss(torch.log(cycle_b), real_b, reduction='mean')
 
+# accuracy, but we ignore padding
 def acc(real_a, cycle_a, real_b, cycle_b, padding_index):
     acc_a = torch.sum(torch.logical_and(real_a != padding_index,  real_a==cycle_a).float())/torch.sum((real_a != padding_index).float())
     acc_b = torch.sum(torch.logical_and(real_b != padding_index,  real_b==cycle_b).float())/torch.sum((real_b != padding_index).float())
     return acc_a, acc_b
-#https://pytorch.org/docs/stable/generated/torch.nn.functional.gumbel_softmax.html
 
+# gru discriminator
 class Discriminator(nn.Module):
 
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=128):
         super(Discriminator, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)#, padding_idx=padding_idx)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)
         self.classify = nn.Sequential(
             nn.Linear(hidden_dim, 1)  
@@ -29,12 +31,13 @@ class Discriminator(nn.Module):
         x = self.classify(x)
         return x
 
+# gru encoder
 class Encoder(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Encoder, self).__init__()
         self.embedding_dim=embedding_dim
         self.hidden_dim=hidden_dim
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)#, padding_idx=padding_idx)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.gru = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True)     
         
     def forward(self, input):
@@ -43,11 +46,12 @@ class Encoder(nn.Module):
         _,hidden = self.gru(x)
         return hidden
     
+# gru decoder
 class Decoder(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512):
         super(Decoder, self).__init__()
         
-        self.embedding = nn.Embedding(vocab_size, embedding_dim)#, padding_idx=padding_idx) 
+        self.embedding = nn.Embedding(vocab_size, embedding_dim)
         self.rnn = nn.GRU(embedding_dim, hidden_dim, num_layers=2, batch_first=True) 
         self.pred = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
@@ -63,6 +67,10 @@ class Decoder(nn.Module):
         x = self.pred(x) # [batch_size, 1, vocab_size]
         return x, hidden
 
+# encoder + decoder generator
+# when training, since we don't have a ground truth, we feed in one token at a time to decoder 
+# and sample to get the next token
+# but during pretraining with identity loss, we can teacher force with the original sequence
 class Generator(nn.Module):
     def __init__(self, vocab_size, padding_idx, embedding_dim=256, hidden_dim=512, pretrain=False):
         super(Generator, self).__init__()
@@ -79,9 +87,13 @@ class Generator(nn.Module):
         hidden = self.encoder(input)
 
         if self.device == 'cuda':
+            # predicted probabilities
             outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True).cuda() 
+            
+            # predicted tokens
             max_output = torch.zeros(batch_size, max_len).cuda() 
 
+            # 388 is start token
             decoder_input = 388*torch.ones(batch_size, dtype=torch.int64).cuda()
         else: 
             outputs = torch.zeros(batch_size, 0, vocab_size, requires_grad=True) 
@@ -97,17 +109,20 @@ class Generator(nn.Module):
         for t in range(1,max_len):
             
             decoder_output, hidden = self.decoder(decoder_input, hidden) # [batch_size, 1, vocab_size], [1, batch_size, hidden_dim] 
-            decoder_output = F.softmax(decoder_output/temp, dim=-1)
+            decoder_output = F.softmax(decoder_output/temp, dim=-1) # softmax with temperature
             
             outputs = torch.cat([outputs, decoder_output], dim=1)
             
             samples = torch.squeeze(decoder_output, dim=1)
             try: 
+                # random sample from predicted token distribution
+                # make that our next token
                 samples = torch.multinomial(samples, 1, True)
                 samples = torch.squeeze(samples, dim=-1)
                 decoder_input = samples 
                 max_output[:, t] = samples
 
+                # if pretraining, we can make the groundtruth input the next token
                 if self.pretrain and np.random.uniform() < teach_force_ratio:
                     decoder_input = input_toks[:,t]
 
@@ -117,7 +132,8 @@ class Generator(nn.Module):
                 
         return outputs, max_output
     
-
+# We referenced this github repo to help us implement the cyclegan forward pass
+# https://github.com/Asthestarsfalll/Symbolic-Music-Genre-Transfer-with-CycleGAN-for-pytorch/blob/main/model.py  
 class CycleGAN(nn.Module):
         def __init__(self, vocab_size, padding_idx, mode='train', lamb=10):
             super(CycleGAN, self).__init__()
@@ -126,12 +142,15 @@ class CycleGAN(nn.Module):
             self.G_B2A = Generator(vocab_size, padding_idx, pretrain=(mode == "pretrain"))
             self.D_A = Discriminator(vocab_size, padding_idx)
             self.D_B = Discriminator(vocab_size, padding_idx)
-            self.l2loss = nn.MSELoss(reduction="mean")
+            self.l2loss = nn.MSELoss(reduction="mean") # using LSGAN loss for better stability https://arxiv.org/abs/1611.04076v3
             self.mode = mode
-            self.lamb = lamb
+            self.lamb = lamb # weight of cycle loss
             self.padding_idx = padding_idx
             self.vocab_size = vocab_size
 
+        # we pretrain generators as autoencoders to gain a better
+        # understanding of musical structure first
+        # got idea from this paper: https://dl.acm.org/doi/10.1145/3400286.3418249
         def pretrain(self, real_A, real_B):
             real_A_int = real_A
             real_B_int = real_B
@@ -156,9 +175,11 @@ class CycleGAN(nn.Module):
             real_A = torch.nn.functional.one_hot(real_A, num_classes=self.vocab_size).float()
             real_B = torch.nn.functional.one_hot(real_B, num_classes=self.vocab_size).float()
 
+            # domain A -> B -> A
             fake_B, fake_B_toks = self.G_A2B(real_A)
             cycle_A, cycle_A_toks = self.G_B2A(fake_B)
 
+            # B -> A -> B
             fake_A, fake_A_toks = self.G_B2A(real_B)
             cycle_B, cycle_B_toks = self.G_A2B(fake_A)
             
@@ -196,6 +217,4 @@ class CycleGAN(nn.Module):
             elif self.mode == 'A2B':
                   return fake_B_toks, cycle_A_toks
             elif self.mode == 'B2A':
-                  return fake_A_toks, cycle_B_toks
-
-#https://github.com/Asthestarsfalll/Symbolic-Music-Genre-Transfer-with-CycleGAN-for-pytorch/blob/main/model.py      
+                  return fake_A_toks, cycle_B_toks    
