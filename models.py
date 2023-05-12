@@ -26,7 +26,7 @@ class Discriminator(nn.Module):
 
     def forward(self, input):
         x = input
-        x = x @ self.embedding.weight
+        x = x @ self.embedding.weight # use matmul instead of embedding idx because we feed in softmax distribution
         _,x = self.gru(x) # we just want the last hidden state
         x = self.classify(x)
         return x
